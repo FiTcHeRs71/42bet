@@ -17,6 +17,7 @@
 
 ## Checklist
 
+- [ ] Le code respecte SOLID (cf. `skills/solid-principles`)
 - [ ] Tests ajoutés / mis à jour
 - [ ] Skills mises à jour si comportement couvert change (cf. `skills/`)
 - [ ] Pas de secret commité (`.env.local` jamais dans le diff)

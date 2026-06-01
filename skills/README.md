@@ -7,6 +7,11 @@ Une skill = un dossier avec un `SKILL.md` qui décrit un workflow ou un pattern 
 
 ## Skills du projet
 
+### Principes transverses
+| Skill | Quand l'utiliser |
+|---|---|
+| [`solid-principles`](./solid-principles/SKILL.md) | Partout — interprétation SOLID pour TS/React/Next.js avec exemples 42Bet |
+
 ### Logique métier / intégrations
 | Skill | Quand l'utiliser |
 |---|---|

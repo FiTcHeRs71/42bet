@@ -37,6 +37,7 @@ description: Template et checklist pour les pull requests 42Bet — uniformise l
 
 ## Checklist
 
+- [ ] Le code respecte SOLID (cf. `skills/solid-principles`)
 - [ ] Tests ajoutés / mis à jour
 - [ ] Skills mises à jour si comportement couvert change (cf. `skills/`)
 - [ ] Pas de secret commité (`.env.local` jamais dans le diff)
@@ -80,5 +81,5 @@ description: Template et checklist pour les pull requests 42Bet — uniformise l
 
 ## Liens
 
-- [[conventional-commits]]
+- [[conventional-commits]] · [[solid-principles]]
 - [[42api-fetch]] · [[bet-points-calc]] · [[supabase-table-create]]
