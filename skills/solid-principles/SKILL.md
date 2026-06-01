@@ -7,7 +7,7 @@ description: Application concrète des principes SOLID dans 42Bet — adapté à
 
 ## Pourquoi
 
-SOLID = 5 règles de design pensées pour limiter la dette dès qu'on est plus d'un dev. Dans un projet à deux (Personne A back, Personne B front), c'est notre meilleur outil pour qu'on ne se marche pas dessus et que le code reste compréhensible par l'autre.
+SOLID = 5 règles de design pensées pour limiter la dette à mesure que la base de code grossit. Même en solo, c'est le meilleur outil pour garder le code compréhensible par future-toi (et par les agents IA qui itèrent dessus).
 
 On les applique **adaptés à l'écosystème TS/React** — pas comme dans un cours de Java.
 

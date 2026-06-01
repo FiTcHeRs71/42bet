@@ -8,9 +8,9 @@
 
 **42Bet** — web app de pronostics foot **sans argent réel** pour les étudiants et piscineux de l'**École 42 Lausanne**, à l'occasion de la Coupe du Monde + nouvelle Piscine 42.
 
-- Équipe de **2 personnes** (back/data + front/UI)
+- Projet **solo** (full-stack)
 - Statut : **pré-MVP**, pas encore déployé
-- Source de vérité métier : [`brainstorming.md`](./brainstorming.md)
+- Source de vérité métier : [`brainstorming.md`](./brainstorming.md) *(rédigé à l'origine pour un duo — référence historique, le projet est aujourd'hui mené seul)*
 
 ## 2. Stack (versions exactes)
 
@@ -125,7 +125,7 @@ Toutes listées dans [`.env.local.example`](./.env.local.example). Pour ajouter 
 - Format des PRs : voir [`pr-template`](./skills/pr-template/SKILL.md) + template dans `.github/pull_request_template.md`
 - Branche par feature : `git checkout -b feat/<slug>`
 - Merge en **squash** par défaut
-- Review d'au moins 1 personne avant merge
+- **Solo workflow** : push direct sur `main` bloqué par protection. Tout passe par une PR + self-review (parcours du diff GitHub, validation de la checklist) avant merge.
 
 ## 9. Pièges Next.js 16 / Tailwind v4 / React 19
 

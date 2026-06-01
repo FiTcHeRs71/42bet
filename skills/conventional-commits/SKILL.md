@@ -99,11 +99,10 @@ match est déjà status='finished' avant de recalculer.
 Refs: discussion #12
 ```
 
-## Travail à deux
+## Règles supplémentaires
 
 - **Une feature = une PR = plusieurs commits OK**, mais chaque commit doit être atomique et lisible
 - `WIP` interdit en main → squash si besoin avant merge
-- Si tu touches au code de l'autre : commit séparé pour la modif, body qui explique pourquoi
 
 ## Anti-patterns à refuser
 

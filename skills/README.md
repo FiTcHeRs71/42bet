@@ -3,7 +3,7 @@
 
 Ce dossier contient les **skills** du projet, au format [vercel-labs/skills](https://github.com/vercel-labs/skills).
 
-Une skill = un dossier avec un `SKILL.md` qui décrit un workflow ou un pattern de code que l'agent IA doit suivre. Les skills sont versionnées avec le code pour que **les deux personnes de l'équipe produisent du code cohérent**, peu importe l'agent IA utilisé (Claude Code, Cursor, Copilot…).
+Une skill = un dossier avec un `SKILL.md` qui décrit un workflow ou un pattern de code que l'agent IA doit suivre. Les skills sont versionnées avec le code pour garantir **un code cohérent dans le temps** et entre les différents outils utilisés (Claude Code, Cursor, Copilot…), même en solo : c'est un contrat avec future-toi et avec les agents IA.
 
 ## Skills du projet
 
