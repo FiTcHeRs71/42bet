@@ -1,3 +1,4 @@
+
 # Skills — 42Bet
 
 Ce dossier contient les **skills** du projet, au format [vercel-labs/skills](https://github.com/vercel-labs/skills).
@@ -5,6 +6,11 @@ Ce dossier contient les **skills** du projet, au format [vercel-labs/skills](htt
 Une skill = un dossier avec un `SKILL.md` qui décrit un workflow ou un pattern de code que l'agent IA doit suivre. Les skills sont versionnées avec le code pour que **les deux personnes de l'équipe produisent du code cohérent**, peu importe l'agent IA utilisé (Claude Code, Cursor, Copilot…).
 
 ## Skills du projet
+
+### Principes transverses
+| Skill | Quand l'utiliser |
+|---|---|
+| [`solid-principles`](./solid-principles/SKILL.md) | Partout — interprétation SOLID pour TS/React/Next.js avec exemples 42Bet |
 
 ### Logique métier / intégrations
 | Skill | Quand l'utiliser |

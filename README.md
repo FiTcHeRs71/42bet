@@ -14,11 +14,22 @@ Web app de pronostics foot **sans argent réel** pour les étudiants et piscineu
 
 ## Stack
 
-- **Next.js** (App Router, TypeScript)
+- **Next.js** (App Router, TypeScript, Tailwind CSS)
 - **Supabase** (PostgreSQL + Auth + RLS)
 - **Vercel** (hosting + Cron Jobs)
 - **NextAuth.js** avec provider OAuth 42 custom
 - **football-data.org** pour les matchs et résultats
+
+## Démarrer en local
+
+```bash
+npm install
+cp .env.local.example .env.local
+# remplir les variables d'environnement
+npm run dev
+```
+
+Puis ouvrir http://localhost:3000.
 
 ## Structure
 
@@ -28,7 +39,10 @@ Web app de pronostics foot **sans argent réel** pour les étudiants et piscineu
 ├── skills/                Skills agent IA (cf. vercel-labs/skills)
 ├── docs/                  Documentation technique
 ├── supabase/migrations/   Schéma DB versionné
-├── src/                   Code Next.js
+├── src/
+│   ├── app/               Pages App Router + routes API
+│   ├── components/        Composants React
+│   └── lib/               Logique métier (points, wrappers API)
 └── tests/                 Tests unitaires
 ```
 
