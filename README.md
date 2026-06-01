@@ -55,11 +55,6 @@ Skills critiques :
 - [`42api-fetch`](./skills/42api-fetch/SKILL.md) — appels API 42 avec rate limit
 - [`supabase-table-create`](./skills/supabase-table-create/SKILL.md) — création de tables (RLS systématique)
 
-## Équipe
-
-- Personne A — Back / Data
-- Personne B — Front / UI
-
 ## License
 
 Non défini pour l'instant — usage interne 42 Lausanne.

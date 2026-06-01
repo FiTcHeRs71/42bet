@@ -12,10 +12,10 @@ description: Template et checklist pour les pull requests 42Bet — uniformise l
 ## Règles non-négociables
 
 1. **Une PR = un sujet** : pas de mélange feat + refactor non lié.
-2. **Au moins 1 review** de l'autre personne avant merge.
+2. **Self-review systématique** avant merge : parcours du diff onglet "Files changed" sur GitHub + checklist remplie. Push direct sur `main` bloqué par branch protection — tout passe par une PR.
 3. **CI verte** obligatoire (lint + typecheck + tests).
 4. **Skills à jour** : si la PR change un comportement couvert par une skill (`bet-points-calc`, `42api-fetch`…), la skill doit être mise à jour dans la même PR.
-5. **Pas de force-push** sur une PR sous review.
+5. **Pas de force-push** sur une PR ouverte (sauf rebase explicite avant merge).
 
 ## Template (`.github/pull_request_template.md`)
 
@@ -54,11 +54,11 @@ description: Template et checklist pour les pull requests 42Bet — uniformise l
 
 1. Branche depuis `main` : `git checkout -b feat/<slug>` (slug = scope du commit principal)
 2. Commits suivant [[conventional-commits]]
-3. Push + ouverture PR
-4. CI doit passer ; tag l'autre en review
-5. Review : laisser des commentaires inline, pas juste "LGTM" si > 50 lignes changées
+3. Push + ouverture PR (`gh pr create`)
+4. CI doit passer
+5. **Self-review** : parcourir le diff onglet "Files changed", remplir la checklist, valider que SOLID est respecté
 6. Merge en **squash** par défaut (historique main lisible)
-7. Branche supprimée après merge
+7. Branche supprimée après merge (local + remote)
 
 ## Points de vigilance spécifiques au projet
 
