@@ -38,6 +38,11 @@ create trigger <table_name>_set_updated_at
 alter table public.<table_name> enable row level security;
 
 -- Policies explicites (à adapter)
+-- ⚠️ 42Bet utilise NextAuth, pas Supabase Auth → auth.uid() est toujours NULL.
+-- Les policies ci-dessous (auth.uid() = user_id) ne s'appliquent donc PAS ici.
+-- Modèle réel : SELECT public (using (true)) sur les tables publiques ;
+-- écritures server-only via la clé service_role (bypass RLS). Voir la spec
+-- docs/superpowers/specs/2026-06-02-database-schema-design.md.
 create policy "<table_name>_select_own"
   on public.<table_name> for select
   using (auth.uid() = user_id);
@@ -70,8 +75,8 @@ $$;
 |---|---|---|
 | `users` | `ft_id`, `login`, `coalition_id`, `total_points` | Synchro avec API 42 |
 | `coalitions` | `ft_id`, `name`, `color`, `image_url` | Référentiel statique |
-| `matches` | `football_data_id`, `home_team`, `away_team`, `kickoff_at`, `home_score`, `away_score`, `status` | Source : football-data.org |
-| `bets` | `user_id`, `match_id`, `home_score`, `away_score`, `points_awarded`, `locked_at` | UNIQUE (user_id, match_id) |
+| `matches` | `football_data_id`, `home_team`, `away_team`, `kickoff_at`, `home_score`, `away_score`, `status` | Source : football-data.org. `status` = enum `match_status` (`scheduled · live · finished · postponed · cancelled`), défini dans `0000_helpers.sql`. |
+| `bets` | `user_id`, `match_id`, `home_score`, `away_score`, `points_awarded` | UNIQUE (user_id, match_id). Bet lock is derived (`now() >= matches.kickoff_at`), not stored. |
 
 ## Anti-patterns à refuser
 
