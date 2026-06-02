@@ -26,20 +26,24 @@
 | `docs/database-schema.md` | Human-facing overview of the schema |
 
 **Notes on decomposition:**
-- One file per migration, FK order encoded in the `NNNN` prefix. `supabase db reset` replays all of them, so each task adds exactly one file and re-validates the full chain.
+- One file per migration, FK order encoded in the `NNNN` prefix. `supabase db push` applies them in lexical order, so the prefix must reflect the FK dependency order.
 - `src/lib/types.ts` uses **snake_case** field names to mirror exactly what `supabase-js` returns. (The `bet-points-calc` skill's local `Bet`/`MatchResult` types in `src/lib/points.ts` are camelCase and intentionally separate — they are the pure-function's minimal inputs, not DB rows. They are not created in this plan.)
 
 ---
 
 ## Prerequisites (read once before starting)
 
-- **Docker must be running** (Docker Desktop or `dockerd`). The local Supabase stack runs in containers. Verify with `docker info` — if it errors, start Docker first.
-- The Supabase CLI is **not** installed globally; this plan installs it as a dev dependency and calls it via `npx supabase`.
+- **No local Postgres / Docker in this environment.** Validation decision (2026-06-02): migrations are validated by pushing them to the **real (empty, pre-MVP) Supabase project** `yrfstssxuhkdtiuugvgf` via `supabase db push`, not via a local `supabase db reset`.
+- The Supabase CLI is **not** installed; this plan installs it as a dev dependency and calls it via `npx supabase`.
 - The `migrations/` directory currently exists and is **empty**. `src/lib/` contains only `.gitkeep`.
+
+> **Validation amendment (applies to Tasks 2–6):** there is no local DB engine during implementation. The per-migration "apply & verify" steps below are **deferred to Task 10**, which applies all migrations to the real Supabase project with `supabase db push`. During implementation, each migration is verified by **inspection against the spec** (correct columns, FK `on delete`, RLS, policies, indexes). Do **not** attempt `supabase db reset` / `psql` — they are not available here.
+>
+> The `db push` in Task 10 is **outward-facing** (it writes to the hosted DB) and requires the project's **DB password**, which only the human has. Task 10 is therefore run by the human via `!`, not by a subagent.
 
 ---
 
-### Task 1: Set up the local Supabase stack
+### Task 1: Install the Supabase CLI and init project config
 
 **Files:**
 - Modify: `package.json` (adds `supabase` devDependency)
@@ -53,34 +57,25 @@ Expected: `supabase` appears under `devDependencies` in `package.json`, no insta
 - [ ] **Step 2: Initialise the Supabase project config**
 
 Run: `npx supabase init`
-Expected: creates `supabase/config.toml`. If prompted to overwrite anything, decline. The existing `supabase/migrations/` directory is preserved (it is empty).
+Expected: creates `supabase/config.toml` (and possibly `supabase/.gitignore`, `supabase/seed.sql`). If prompted to overwrite anything, decline. The existing `supabase/migrations/` directory must be preserved (it is empty).
 
-If `supabase init` complains the directory already has a `supabase/` folder, that's fine — it only needs to create `config.toml` next to the existing `migrations/`.
+If `supabase init` complains the directory already has a `supabase/` folder, that's fine — it only needs to create `config.toml` next to the existing `migrations/`. If it generated a `supabase/seed.sql`, leave it empty (the spec says no seed).
 
-- [ ] **Step 3: Start the local stack**
+- [ ] **Step 3: Set the project_id in config.toml**
 
-Run: `npx supabase start`
-Expected: Docker pulls images (first run is slow) and prints local credentials, including:
+In `supabase/config.toml`, set the top-level `project_id` to the real project ref:
+```toml
+project_id = "yrfstssxuhkdtiuugvgf"
 ```
-DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-```
-Note this `DB URL` — later steps use it as `$DB_URL`. If `supabase start` fails with a Docker error, start Docker and retry.
+(This is the ref from `NEXT_PUBLIC_SUPABASE_URL=https://yrfstssxuhkdtiuugvgf.supabase.co`. It lets `supabase db push` target the right project without re-prompting.)
 
-- [ ] **Step 4: Export the local DB URL for verification queries**
-
-Run:
-```bash
-export DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
-psql "$DB_URL" -c "select version();"
-```
-Expected: prints a `PostgreSQL 15.x ...` line. If `psql` is not installed, use `npx supabase db reset` output for validation and run queries via `npx supabase` instead — but `psql` is strongly preferred for the verification steps below.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add package.json package-lock.json supabase/config.toml
-git commit -m "chore(db): add supabase CLI and init local stack"
+git add package.json package-lock.json supabase/config.toml supabase/.gitignore supabase/seed.sql
+git commit -m "chore(db): add supabase CLI and init project config"
 ```
+(Only `git add` the files that actually exist after `supabase init`.)
 
 ---
 
@@ -605,12 +600,19 @@ tout insert/update de pari après le coup d'envoi. Aucune colonne ne stocke cet
 transaction qui passe le match en `finished` et incrémente `users.total_points`.
 Le cron **skip un match déjà `finished`** → points jamais doublés.
 
-## Validation locale
+## Validation
+
+Pas de stack local (ni Docker ni Postgres dans l'env de dev). Les migrations
+sont appliquées au projet Supabase réel :
 
 ```bash
-npx supabase start      # démarre le stack local (Docker)
-npx supabase db reset   # rejoue toutes les migrations depuis zéro
+npx supabase login                                   # token d'accès perso
+npx supabase link --project-ref yrfstssxuhkdtiuugvgf # mot de passe DB
+npx supabase db push                                 # applique les migrations
 ```
+
+Quand un environnement Docker est disponible, `npx supabase db reset` rejoue
+toutes les migrations depuis zéro en local (préférable pour le dev courant).
 ```
 
 - [ ] **Step 2: Verify the doc lints (if prose linting is configured) and links resolve**
@@ -627,46 +629,52 @@ git commit -m "docs(db): add human-facing database schema overview"
 
 ---
 
-### Task 10: Full validation pass
+### Task 10: Apply to the real Supabase project + verify (human-run)
 
-**Files:** none (verification only)
+**Files:** none (validation only). **Outward-facing** — writes to the hosted DB.
 
-- [ ] **Step 1: Reset the DB from scratch one final time**
+This task is run by the **human**, because it needs the project's DB password and a Supabase access token. The controller prepares the commands; the human runs them via `!` so the secrets never pass through the agent.
 
-Run: `npx supabase db reset`
-Expected: applies `0000`→`0004` in order, finishes with no error.
+- [ ] **Step 1 (human): Authenticate the CLI**
 
-- [ ] **Step 2: Confirm all four tables exist with RLS enabled**
+Run: `npx supabase login`
+Then paste a personal access token from https://supabase.com/dashboard/account/tokens
+Expected: `Finished supabase login.`
 
-Run:
+- [ ] **Step 2 (human): Link the local project to the remote**
+
+Run: `npx supabase link --project-ref yrfstssxuhkdtiuugvgf`
+Enter the project's **database password** when prompted (the one set at project creation; resettable in Dashboard → Settings → Database).
+Expected: `Finished supabase link.`
+
+- [ ] **Step 3 (human): Push the migrations**
+
+Run: `npx supabase db push`
+Expected: lists the 5 migrations `0000`→`0004` as pending and applies them in order with no error. (`db push` runs them inside the remote DB; any SQL error aborts and is printed.)
+
+- [ ] **Step 4 (controller): Verify tables exist via the REST API**
+
+Using the keys already in `.env.local` (no DB password needed), confirm each public table is present and the policy model holds. Run (substituting the anon key):
 ```bash
-psql "$DB_URL" -c "select tablename, rowsecurity from pg_tables natural join (select relname as tablename, relrowsecurity as rowsecurity from pg_class) c where schemaname = 'public' and tablename in ('coalitions','users','matches','bets') order by tablename;"
+URL="https://yrfstssxuhkdtiuugvgf.supabase.co/rest/v1"
+ANON="$NEXT_PUBLIC_SUPABASE_ANON_KEY"   # from .env.local
+for t in coalitions users matches bets; do
+  echo -n "$t -> "; curl -s -o /dev/null -w "%{http_code}\n" \
+    "$URL/$t?select=id&limit=1" -H "apikey: $ANON" -H "Authorization: Bearer $ANON"
+done
 ```
-Expected: four rows (`bets`, `coalitions`, `matches`, `users`), each with `rowsecurity = t`.
+Expected: `coalitions`, `users`, `matches`, `bets` each return **200** (table exists; PostgREST exposes it). A `404`/`PGRST205` means the table is missing or PostgREST hasn't reloaded its schema cache yet — wait ~30 s and retry. (For `bets`, RLS hides all rows so the body is `[]`, but the status is still 200 — that confirms existence.)
 
-- [ ] **Step 3: Confirm the policy count matches the model**
-
-Run:
-```bash
-psql "$DB_URL" -c "select tablename, count(*) from pg_policies where tablename in ('coalitions','users','matches','bets') group by tablename order by tablename;"
-```
-Expected: `coalitions = 1`, `matches = 1`, `users = 1`, and `bets` **absent** (0 policies → not in the grouped result).
-
-- [ ] **Step 4: Run project checks**
+- [ ] **Step 5 (controller): Run project checks**
 
 Run: `npm run typecheck && npm run lint`
 Expected: both PASS.
-
-- [ ] **Step 5: Stop the local stack (optional cleanup)**
-
-Run: `npx supabase stop`
-Expected: containers stop. (Skip if you want to keep developing.)
 
 ---
 
 ## Done criteria
 
-- [ ] `supabase db reset` applies all 5 migrations cleanly from scratch.
+- [ ] `supabase db push` applies all 5 migrations to the real project with no error.
 - [ ] `coalitions`, `users`, `matches` are publicly SELECT-able; `bets` is default-deny.
 - [ ] FK on-delete behaviours match the spec (`users.coalition_id` → SET NULL; `bets.*` → CASCADE).
 - [ ] `match_status` enum has the 5 simplified values; `matches.status` uses it.
