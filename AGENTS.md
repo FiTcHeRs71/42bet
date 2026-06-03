@@ -26,7 +26,7 @@
 | API 42 | intra.42.fr | OAuth2, 2 req/sec, 1200 req/h |
 | Language | TypeScript | strict |
 | Lint | ESLint v9 | flat config |
-| Tests | (à choisir) | Vitest probablement |
+| Tests | Vitest | installé (`npm test`) |
 
 <!-- BEGIN:nextjs-agent-rules -->
 **⚠️ Next.js 16, React 19 et Tailwind v4 ont tous des breaking changes par rapport au training cutoff des modèles courants.** Toujours lire `node_modules/next/dist/docs/` avant d'écrire du code Next.js spécifique. Voir §9.
@@ -155,5 +155,5 @@ Si tu n'es pas sûr·e qu'une API est encore valide → vérifier dans `node_mod
 Pour aller plus loin :
 - Architecture et flux de données → `docs/architecture.md` *(à rédiger)*
 - Endpoints API 42 utilisés → `docs/api-42.md` *(à rédiger)*
-- Schéma DB complet → `docs/database-schema.md` *(à rédiger)*
+- Schéma DB complet → `docs/database-schema.md` ✅
 - Déploiement → `docs/deploy.md` *(à rédiger)*
