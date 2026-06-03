@@ -26,6 +26,11 @@ description: Wrapper standard pour appeler l'API 42 (intra.42.fr) avec respect d
 | `GET /v2/campus/33/users` | Lister les users du campus Lausanne (paginé) |
 | `GET /v2/coalitions` | Toutes les coalitions du campus |
 
+> **Exception assumée** : pendant le sign-in OAuth (NextAuth), `/v2/me` est
+> appelé par NextAuth avec le **token utilisateur** (issu de l'échange OAuth),
+> pas via `fetch42()` (qui utilise le token applicatif `client_credentials`).
+> C'est le seul appel API 42 hors wrapper. Voir `src/lib/auth/config.ts`.
+
 ## Structure attendue
 
 Code dans `src/lib/api-42.ts` :
