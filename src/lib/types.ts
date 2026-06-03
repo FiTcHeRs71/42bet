@@ -1,60 +1,14 @@
 // src/lib/types.ts
-// Database row types — field names mirror the SQL columns (snake_case) so they
-// match exactly what supabase-js returns. Source of truth: supabase/migrations/.
-// NOTE: src/lib/points.ts defines its own minimal camelCase Bet/MatchResult
-// types for the pure scoring function — those are deliberately separate.
+// Domain row/enum types — thin aliases over the generated Database types
+// (src/lib/database.types.ts), so there is a single source of truth derived
+// from the real schema. Regenerate database.types.ts with:
+//   npx supabase gen types typescript --linked > src/lib/database.types.ts
 
-export type MatchStatus =
-  | "scheduled"
-  | "live"
-  | "finished"
-  | "postponed"
-  | "cancelled";
+import type { Enums, Tables } from "@/lib/database.types";
 
-export interface Coalition {
-  id: string;
-  ft_id: number;
-  name: string;
-  color: string;
-  image_url: string | null;
-  created_at: string;
-  updated_at: string;
-}
+export type Coalition = Tables<"coalitions">;
+export type User = Tables<"users">;
+export type Match = Tables<"matches">;
+export type Bet = Tables<"bets">;
 
-export interface User {
-  id: string;
-  ft_id: number;
-  login: string;
-  avatar_url: string | null;
-  coalition_id: string | null;
-  total_points: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Match {
-  id: string;
-  football_data_id: number;
-  home_team: string;
-  away_team: string;
-  home_crest_url: string | null;
-  away_crest_url: string | null;
-  stage: string | null;
-  kickoff_at: string;
-  status: MatchStatus;
-  home_score: number | null;
-  away_score: number | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface BetRow {
-  id: string;
-  user_id: string;
-  match_id: string;
-  home_score: number;
-  away_score: number;
-  points_awarded: number | null;
-  created_at: string;
-  updated_at: string;
-}
+export type MatchStatus = Enums<"match_status">;
