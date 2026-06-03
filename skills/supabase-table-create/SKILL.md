@@ -51,6 +51,14 @@ create policy "<table_name>_insert_own"
   on public.<table_name> for insert
   with check (auth.uid() = user_id);
 
+-- ⚠️ INDISPENSABLE : une policy RLS ne suffit PAS. PostgREST vérifie les
+-- privilèges SQL AVANT la RLS → sans GRANT, l'API renvoie 42501 « permission
+-- denied » (même avec une policy `using (true)`). Les tables créées via
+-- migration n'ont PAS les grants auto que donne le dashboard Supabase.
+-- Pour une table en lecture publique :
+grant select on public.<table_name> to anon, authenticated;
+-- (Une table server-only — ex. `bets` — ne reçoit AUCUN grant → deny total.)
+
 -- Index sur les colonnes filtrées fréquemment
 create index <table_name>_user_id_idx on public.<table_name>(user_id);
 ```
@@ -82,6 +90,7 @@ $$;
 
 - ❌ Modifier une table via l'UI Supabase (pas reproductible, pas reviewable)
 - ❌ Désactiver RLS "temporairement" (ça reste permanent)
+- ❌ Activer RLS + policy SELECT **sans** `grant select … to anon` → PostgREST renvoie 42501 « permission denied »
 - ❌ Foreign key sans `on delete` explicite
 - ❌ Colonnes nommées en camelCase (Postgres = snake_case)
 - ❌ Stocker du JSON dans une colonne quand 2-3 colonnes suffisent
