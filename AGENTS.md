@@ -20,7 +20,7 @@
 | UI | React | **19.2.4** |
 | Styling | Tailwind CSS | **v4** (nouvelle syntaxe — voir §9) |
 | DB + Auth | Supabase | dernière |
-| Auth web | NextAuth.js | dernière, provider OAuth 42 custom |
+| Auth web | NextAuth.js (Auth.js) | **v5 (`5.0.0-beta.31`)**, provider `42-school` (id `"42"`) |
 | Hosting | Vercel | + Cron Jobs |
 | API foot | football-data.org | gratuit, 10 req/min |
 | API 42 | intra.42.fr | OAuth2, 2 req/sec, 1200 req/h |
@@ -52,8 +52,16 @@
 ├── supabase/migrations/          schéma DB versionné (jamais l'UI Supabase)
 ├── src/
 │   ├── app/                      App Router (pages + routes API)
-│   ├── components/               composants React
+│   │   └── api/
+│   │       ├── auth/[...nextauth]/   NextAuth v5 (login OAuth 42)
+│   │       └── cron/sync-results/    cron scoring (protégé CRON_SECRET)
+│   ├── components/               composants React (site-header, auth-button)
 │   └── lib/                      logique métier pure + wrappers
+│       ├── auth/                 profile (pur), upsert-player (DI), config NextAuth
+│       ├── supabase/             clients typés (browser + server service_role)
+│       ├── points.ts             calcul des points (pur, centralisé)
+│       ├── sync.ts               orchestrateur cron (DI pur)
+│       └── football-data.ts      wrapper football-data.org
 ├── tests/                        tests unitaires
 ├── public/                       assets statiques
 ├── vercel.json                   cron sync-results
@@ -167,4 +175,4 @@ Pour aller plus loin :
 - Architecture et flux de données → `docs/architecture.md` *(à rédiger)*
 - Endpoints API 42 utilisés → `docs/api-42.md` *(à rédiger)*
 - Schéma DB complet → `docs/database-schema.md` ✅
-- Déploiement → `docs/deploy.md` *(à rédiger)*
+- Setup machine + déploiement → `docs/deploy.md` ✅
