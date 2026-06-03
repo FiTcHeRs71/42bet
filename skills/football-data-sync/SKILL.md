@@ -38,24 +38,37 @@ description: Pattern pour le cron Vercel qui synchronise les matchs depuis footb
 6. Return 200 avec résumé
 ```
 
-## Structure attendue
+## Structure réalisée
+
+Implémenté via un orchestrateur en **injection de dépendances** : toute la logique
+(gate, throttle, idempotence par match, isolation d'erreurs) vit dans `runSync`
+— pur, testé avec des fakes, zéro mock de Supabase/`fetch`. La route est un
+adaptateur mince qui câble les vraies I/O.
+
+| Couche | Fichier | Rôle |
+|---|---|---|
+| Route (adaptateur) | `src/app/api/cron/sync-results/route.ts` | Auth → build `SyncDeps` → `runSync` → JSON |
+| Orchestrateur (pur, DI) | `src/lib/sync.ts` | `runSync`, `parseFinishedMatches`, `scoreBets`, `ThrottledError` |
+| Fetch foot (server-only) | `src/lib/football-data.ts` | 1 `GET` global WC, 429 → `ThrottledError` |
+| Persistance atomique | `supabase/migrations/0006_score_match.sql` | RPC `score_match` — 1 transaction, garde d'idempotence SQL (`points_awarded IS NULL`) |
+| Calcul des points | `src/lib/points.ts` (`calcBetPoints`) | règle pure, jamais réimplémentée |
 
 ```ts
-// src/app/api/cron/sync-results/route.ts
+// src/app/api/cron/sync-results/route.ts (squelette)
 export const dynamic = "force-dynamic"; // pas de cache
 
 export async function GET(req: Request) {
-  // 1. Auth
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  // 1. Auth — vérifiée en premier.
+  if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  // 2. Fetch + sync
-  const matches = await fetchFinishedMatches();
-  const results = await syncMatches(matches);
+  // 2. Câbler les vraies I/O (Supabase + football-data) dans l'orchestrateur pur.
+  const deps: SyncDeps = { hasMatchInResultWindow, fetchFinished, loadMatchWithUnscoredBets, persistScore };
 
-  return Response.json({ ok: true, ...results });
+  // 3. Exécuter et reporter.
+  const summary = await runSync(deps);
+  return Response.json({ ok: true, ...summary });
 }
 ```
 

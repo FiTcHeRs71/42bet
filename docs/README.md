@@ -7,7 +7,7 @@ Ce dossier contient la doc technique du projet. Les **skills** (`../skills/`) ca
 - `architecture.md` — vue d'ensemble, flux de données *(à rédiger)*
 - `api-42.md` — détails des endpoints utilisés, exemples *(à rédiger)*
 - `football-data.md` — détails de l'API foot, formats *(à rédiger)*
-- `database-schema.md` — tables, relations, RLS *(à rédiger)*
+- `database-schema.md` — tables, relations, RLS ✅
 - `deploy.md` — procédure de déploiement Vercel *(à rédiger)*
 
 ## docs/ vs skills/
