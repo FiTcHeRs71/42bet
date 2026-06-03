@@ -3,6 +3,10 @@ import { MatchRow } from "@/components/match-row";
 import { listMatches } from "@/lib/matches";
 import { displayState, groupByDay } from "@/lib/match-view";
 
+// Les états d'affichage (à venir / en cours / terminé) dépendent de `now`, donc
+// le rendu ne doit jamais être figé statiquement.
+export const dynamic = "force-dynamic";
+
 const DAY_FMT = new Intl.DateTimeFormat("fr-FR", {
   timeZone: "Europe/Zurich",
   weekday: "long",
