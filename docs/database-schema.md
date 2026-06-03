@@ -12,6 +12,9 @@
 - **Lectures publiques** (classement, matchs, coalitions) : clé **publishable**
   côté navigateur, en lecture seule.
 - **RLS** : défense en profondeur. `bets` n'a aucune policy → deny par défaut.
+- **GRANT** : une policy RLS ne suffit pas — PostgREST vérifie les privilèges SQL
+  avant la RLS. `coalitions`/`users`/`matches` ont `grant select … to anon`
+  (migration `0005`). `bets` n'a aucun grant → l'API anon renvoie 42501.
 
 ## Helpers (`0000_helpers.sql`)
 
