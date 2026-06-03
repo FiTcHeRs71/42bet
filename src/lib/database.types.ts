@@ -211,7 +211,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      score_match: {
+        Args: {
+          p_away: number
+          p_fd_id: number
+          p_home: number
+          p_scored: Json
+        }
+        Returns: Json
+      }
     }
     Enums: {
       match_status:
