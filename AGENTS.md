@@ -122,10 +122,21 @@ Toutes listées dans [`.env.local.example`](./.env.local.example). Pour ajouter 
 ## 8. Workflow git & PR
 
 - Format des commits : voir [`conventional-commits`](./skills/conventional-commits/SKILL.md)
-- Format des PRs : voir [`pr-template`](./skills/pr-template/SKILL.md) + template dans `.github/pull_request_template.md`
 - Branche par feature : `git checkout -b feat/<slug>`
-- Merge en **squash** par défaut
-- **Solo workflow** : push direct sur `main` bloqué par protection. Tout passe par une PR + self-review (parcours du diff GitHub, validation de la checklist) avant merge.
+
+**Phase actuelle — pré-déploiement (workflow assoupli)** : tant que le projet
+n'est **pas déployé**, **pas de PR obligatoire**. On travaille en branche par
+feature puis `git merge --no-ff` dans `main` en **local**, après :
+1. self-review rapide du diff au moment du merge,
+2. vérifs vertes : `npm test` + `npm run typecheck` + `npm run lint`.
+
+But : avancer vite en solo. (On peut même committer en direct sur une petite
+branche jetable ; l'essentiel = `main` reste vert.)
+
+**Au déploiement — à réactiver** : repasser en flux **PR + self-review**
+(template [`pr-template`](./skills/pr-template/SKILL.md) +
+`.github/pull_request_template.md`), merge **squash**, et **protection de
+`main`**. Les skills PR restent en place pour ce moment-là.
 
 ## 9. Pièges Next.js 16 / Tailwind v4 / React 19
 
