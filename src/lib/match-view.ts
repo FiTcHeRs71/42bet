@@ -43,6 +43,10 @@ export function displayState(match: Match, now: Date): MatchDisplayState {
       return now.getTime() >= new Date(match.kickoff_at).getTime()
         ? "live"
         : "upcoming";
+    default: {
+      const _exhaustive: never = match.status;
+      return _exhaustive;
+    }
   }
 }
 

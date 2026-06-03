@@ -68,6 +68,13 @@ describe("groupByDay", () => {
     expect(groups[0].matches.map((m) => m.football_data_id)).toEqual([2, 1]);
   });
 
+  test("kickoff tardif UTC -> bon jour Europe/Zurich (straddle minuit)", () => {
+    // 22:30Z = 00:30 le lendemain à Zurich (CEST, +2)
+    const late = match({ football_data_id: 1, kickoff_at: "2026-06-11T22:30:00Z" });
+    const groups = groupByDay([late]);
+    expect(groups.map((g) => g.dayKey)).toEqual(["2026-06-12"]);
+  });
+
   test("plusieurs jours, entrée désordonnée -> groupes triés chrono", () => {
     const d12 = match({ football_data_id: 1, kickoff_at: "2026-06-12T16:00:00Z" });
     const d11 = match({ football_data_id: 2, kickoff_at: "2026-06-11T16:00:00Z" });
