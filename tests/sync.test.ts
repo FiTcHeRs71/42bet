@@ -1,10 +1,14 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import {
   parseFinishedMatches,
   scoreBets,
+  runSync,
+  ThrottledError,
   type BetRow,
+  type FinishedMatch,
   type FootballDataResponse,
+  type SyncDeps,
 } from "../src/lib/sync";
 
 describe("parseFinishedMatches", () => {
@@ -55,5 +59,90 @@ describe("scoreBets", () => {
 
   test("returns empty array when there are no bets", () => {
     expect(scoreBets([], { homeScore: 1, awayScore: 1 })).toEqual([]);
+  });
+});
+
+describe("runSync", () => {
+  // A finished match the API reports, plus its DB state + bets.
+  const apiFinished: FinishedMatch[] = [
+    { footballDataId: 100, homeScore: 2, awayScore: 1 },
+  ];
+
+  function baseDeps(over: Partial<SyncDeps> = {}): SyncDeps {
+    return {
+      hasMatchInResultWindow: vi.fn(async () => true),
+      fetchFinished: vi.fn(async () => apiFinished),
+      loadMatchWithUnscoredBets: vi.fn(async () => ({
+        matchId: "m1",
+        status: "scheduled",
+        homeScore: null,
+        awayScore: null,
+        bets: [{ id: "b1", user_id: "u1", home_score: 2, away_score: 1 }] as BetRow[],
+      })),
+      persistScore: vi.fn(async () => {}),
+      ...over,
+    };
+  }
+
+  test("skips entirely (no network) when no match is in the result window", async () => {
+    const deps = baseDeps({ hasMatchInResultWindow: vi.fn(async () => false) });
+    const summary = await runSync(deps);
+    expect(summary).toEqual({ skipped: true, throttled: false, processed: 0, scored: 0, errors: 0 });
+    expect(deps.fetchFinished).not.toHaveBeenCalled();
+  });
+
+  test("returns throttled when fetch throws ThrottledError", async () => {
+    const deps = baseDeps({
+      fetchFinished: vi.fn(async () => {
+        throw new ThrottledError("rate limit");
+      }),
+    });
+    const summary = await runSync(deps);
+    expect(summary.throttled).toBe(true);
+    expect(deps.persistScore).not.toHaveBeenCalled();
+  });
+
+  test("scores a finished match and counts processed + scored bets", async () => {
+    const deps = baseDeps();
+    const summary = await runSync(deps);
+    expect(deps.persistScore).toHaveBeenCalledWith(100, 2, 1, [{ betId: "b1", points: 3 }]);
+    expect(summary).toMatchObject({ skipped: false, throttled: false, processed: 1, scored: 1, errors: 0 });
+  });
+
+  test("idempotent: skips a match already finished with the same score and no unscored bets", async () => {
+    const deps = baseDeps({
+      loadMatchWithUnscoredBets: vi.fn(async () => ({
+        matchId: "m1",
+        status: "finished",
+        homeScore: 2,
+        awayScore: 1,
+        bets: [],
+      })),
+    });
+    const summary = await runSync(deps);
+    expect(deps.persistScore).not.toHaveBeenCalled();
+    expect(summary.processed).toBe(0);
+  });
+
+  test("skips matches not in our calendar (loadMatch returns null)", async () => {
+    const deps = baseDeps({ loadMatchWithUnscoredBets: vi.fn(async () => null) });
+    const summary = await runSync(deps);
+    expect(deps.persistScore).not.toHaveBeenCalled();
+    expect(summary.processed).toBe(0);
+  });
+
+  test("isolates a per-match failure: counts an error, keeps going", async () => {
+    const deps = baseDeps({
+      fetchFinished: vi.fn(async () => [
+        { footballDataId: 100, homeScore: 2, awayScore: 1 },
+        { footballDataId: 200, homeScore: 0, awayScore: 0 },
+      ]),
+      persistScore: vi.fn(async (fdId: number) => {
+        if (fdId === 100) throw new Error("db down");
+      }),
+    });
+    const summary = await runSync(deps);
+    expect(summary.errors).toBe(1);
+    expect(summary.processed).toBe(1); // the second match still scored
   });
 });
