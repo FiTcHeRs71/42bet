@@ -1,8 +1,12 @@
 // src/app/leaderboard/page.tsx
 import Link from "next/link";
+
 import { CoalitionBadge } from "@/components/coalition-badge";
 import { listAllBets } from "@/lib/bets";
-import { buildLeaderboard } from "@/lib/leaderboard";
+import {
+  buildCoalitionLeaderboard,
+  buildLeaderboard,
+} from "@/lib/leaderboard";
 import { listPlayers } from "@/lib/users";
 
 // Les points évoluent après chaque match : le rendu ne doit pas être figé.
@@ -13,9 +17,12 @@ const PCT_FMT = new Intl.NumberFormat("fr-FR", {
   maximumFractionDigits: 0,
 });
 
+const AVG_FMT = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 });
+
 export default async function LeaderboardPage() {
   const [players, bets] = await Promise.all([listPlayers(), listAllBets()]);
   const entries = buildLeaderboard(players, bets);
+  const coalitions = buildCoalitionLeaderboard(entries);
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 p-6">
@@ -25,6 +32,40 @@ export default async function LeaderboardPage() {
         <p className="text-zinc-500">Aucun pronostic pour l&apos;instant.</p>
       ) : (
         <>
+          {coalitions.length > 0 && (
+            <section className="mb-8">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-400">
+                Par coalition
+              </h2>
+              <ul className="divide-y divide-black/5 rounded-lg border border-black/10 dark:divide-white/5 dark:border-white/10">
+                {coalitions.map((c) => (
+                  <li
+                    key={c.coalition.name}
+                    className="flex items-center gap-3 px-4 py-3 text-sm"
+                  >
+                    <span className="w-6 shrink-0 text-center font-semibold tabular-nums text-zinc-500">
+                      {c.rank}
+                    </span>
+                    <CoalitionBadge coalition={c.coalition} size="md" />
+                    <span className="flex-1" />
+                    <span className="shrink-0 text-right font-semibold tabular-nums">
+                      {AVG_FMT.format(c.average)} pt/j
+                    </span>
+                    <span className="w-14 shrink-0 text-right tabular-nums text-zinc-500">
+                      {c.totalPoints} pt
+                    </span>
+                    <span className="w-20 shrink-0 text-right tabular-nums text-zinc-500">
+                      {c.players} {c.players > 1 ? "joueurs" : "joueur"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-400">
+            Individuel
+          </h2>
           <div className="flex items-center gap-3 px-4 pb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-400">
             <span className="w-6" />
             <span className="w-8" />
