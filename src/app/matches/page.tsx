@@ -1,10 +1,14 @@
 // src/app/matches/page.tsx
 import { MatchRow } from "@/components/match-row";
+import { auth } from "@/lib/auth/config";
+import { listMyBets } from "@/lib/bets";
 import { listMatches } from "@/lib/matches";
 import { displayState, groupByDay } from "@/lib/match-view";
+import { resolveUserId } from "@/lib/users";
+import type { Bet } from "@/lib/types";
 
-// Les états d'affichage (à venir / en cours / terminé) dépendent de `now`, donc
-// le rendu ne doit jamais être figé statiquement.
+// Les états d'affichage (à venir / en cours / terminé) dépendent de `now`, et la
+// page lit les pronos privés du joueur connecté : le rendu doit rester dynamique.
 export const dynamic = "force-dynamic";
 
 const DAY_FMT = new Intl.DateTimeFormat("fr-FR", {
@@ -15,7 +19,20 @@ const DAY_FMT = new Intl.DateTimeFormat("fr-FR", {
 });
 
 export default async function MatchesPage() {
-  const matches = await listMatches();
+  const [matches, session] = await Promise.all([listMatches(), auth()]);
+
+  // Pronos du joueur connecté, indexés par match_id (lecture privée après auth()).
+  const betsByMatch = new Map<string, Bet>();
+  if (session?.user?.ftId) {
+    const userId = await resolveUserId(session.user.ftId);
+    if (userId) {
+      for (const bet of await listMyBets(userId)) {
+        betsByMatch.set(bet.match_id, bet);
+      }
+    }
+  }
+  const isAuthenticated = Boolean(session?.user?.ftId);
+
   const now = new Date();
   const days = groupByDay(matches);
 
@@ -38,6 +55,8 @@ export default async function MatchesPage() {
                     key={match.id}
                     match={match}
                     state={displayState(match, now)}
+                    bet={betsByMatch.get(match.id)}
+                    isAuthenticated={isAuthenticated}
                   />
                 ))}
               </ul>
