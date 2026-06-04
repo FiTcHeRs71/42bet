@@ -12,6 +12,12 @@ export function SiteHeader() {
         <Link href="/matches" className="text-sm text-zinc-500 hover:text-current">
           Matchs
         </Link>
+        <Link
+          href="/leaderboard"
+          className="text-sm text-zinc-500 hover:text-current"
+        >
+          Classement
+        </Link>
       </div>
       <AuthButton />
     </header>
