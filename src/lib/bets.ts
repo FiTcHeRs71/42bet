@@ -4,6 +4,7 @@
 // bets a une RLS default-deny, donc tout passe par le serveur après auth().
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import type { LeaderboardBet } from "@/lib/leaderboard";
 import type { Bet } from "@/lib/types";
 
 /** Tous les paris d'un joueur (par users.id). Lève en cas d'erreur DB. */
@@ -39,4 +40,18 @@ export async function upsertBet(input: {
   );
 
   if (error) throw new Error(`upsertBet: ${error.message}`);
+}
+
+/**
+ * Tous les pronos (id joueur + points attribués) pour le classement. Lecture
+ * server-only via service_role (bets est RLS default-deny). On ne renvoie que
+ * user_id + points_awarded — jamais les scores pronostiqués individuels.
+ */
+export async function listAllBets(): Promise<LeaderboardBet[]> {
+  const { data, error } = await supabaseAdmin
+    .from("bets")
+    .select("user_id, points_awarded");
+
+  if (error) throw new Error(`listAllBets: ${error.message}`);
+  return data ?? [];
 }
