@@ -79,3 +79,72 @@ export function buildLeaderboard(
     return { rank, ...entry };
   });
 }
+
+export type CoalitionStanding = {
+  rank: number;
+  coalition: { name: string; color: string; image_url: string | null };
+  totalPoints: number;
+  players: number; // nb de parieurs actifs de la coalition
+  average: number; // totalPoints / players (float, arrondi à l'affichage)
+};
+
+/**
+ * Classement des coalitions à la moyenne de points par parieur actif. Agrège la
+ * sortie de buildLeaderboard (déjà filtrée aux parieurs actifs) — aucun recalcul
+ * de points (rule #7). Exclut les joueurs sans coalition. Testée dans
+ * tests/leaderboard.test.ts.
+ */
+export function buildCoalitionLeaderboard(
+  entries: LeaderboardEntry[],
+): CoalitionStanding[] {
+  // 1. Regrouper par coalition (clé = nom, unique par campus), exclure les nuls.
+  const byName = new Map<
+    string,
+    {
+      coalition: NonNullable<LeaderboardEntry["coalition"]>;
+      totalPoints: number;
+      players: number;
+    }
+  >();
+  for (const e of entries) {
+    if (e.coalition === null) continue;
+    const acc = byName.get(e.coalition.name);
+    if (acc) {
+      acc.totalPoints += e.points;
+      acc.players += 1;
+    } else {
+      byName.set(e.coalition.name, {
+        coalition: e.coalition,
+        totalPoints: e.points,
+        players: 1,
+      });
+    }
+  }
+
+  // 2. Moyenne par coalition.
+  const aggregated = [...byName.values()].map((a) => ({
+    coalition: a.coalition,
+    totalPoints: a.totalPoints,
+    players: a.players,
+    average: a.totalPoints / a.players,
+  }));
+
+  // 3. Tri : moyenne décroissante, départage total décroissant puis nom croissant.
+  aggregated.sort(
+    (a, b) =>
+      b.average - a.average ||
+      b.totalPoints - a.totalPoints ||
+      a.coalition.name.localeCompare(b.coalition.name),
+  );
+
+  // 4. Rang standard (1,1,3) sur la moyenne : même rang à moyenne égale.
+  let lastAvg: number | null = null;
+  let lastRank = 0;
+  return aggregated.map((entry, index) => {
+    const rank =
+      lastAvg !== null && entry.average === lastAvg ? lastRank : index + 1;
+    lastAvg = entry.average;
+    lastRank = rank;
+    return { rank, ...entry };
+  });
+}
