@@ -6,8 +6,6 @@
 
 import type { MatchStatus } from "@/lib/types";
 
-export type BetInput = { homeScore: number; awayScore: number };
-
 const MAX_SCORE = 99;
 
 /**

@@ -47,6 +47,10 @@ describe("validateScore", () => {
     expect(validateScore(0, 0)).toBe(true);
   });
 
+  test("borne haute (99, 99) -> true", () => {
+    expect(validateScore(99, 99)).toBe(true);
+  });
+
   test("négatif (-1, 0) -> false", () => {
     expect(validateScore(-1, 0)).toBe(false);
   });
