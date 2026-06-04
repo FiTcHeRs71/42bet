@@ -1,4 +1,5 @@
 // src/app/leaderboard/page.tsx
+import Link from "next/link";
 import { CoalitionBadge } from "@/components/coalition-badge";
 import { listAllBets } from "@/lib/bets";
 import { buildLeaderboard } from "@/lib/leaderboard";
@@ -52,7 +53,12 @@ export default async function LeaderboardPage() {
                 ) : (
                   <span className="h-8 w-8 shrink-0 rounded-full bg-zinc-200 dark:bg-zinc-700" />
                 )}
-                <span className="flex-1 truncate font-medium">{e.login}</span>
+                <Link
+                  href={`/profile/${e.login}`}
+                  className="flex-1 truncate font-medium hover:underline"
+                >
+                  {e.login}
+                </Link>
                 <CoalitionBadge coalition={e.coalition} size="sm" />
                 <span className="w-14 shrink-0 text-right tabular-nums">
                   {e.accuracy === null ? "—" : PCT_FMT.format(e.accuracy)}
