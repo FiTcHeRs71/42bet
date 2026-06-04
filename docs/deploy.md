@@ -48,6 +48,39 @@ npx supabase link --project-ref yrfstssxuhkdtiuugvgf
 L'état du lien vit dans `supabase/.temp/` (gitignoré), d'où la nécessité de
 relinker sur chaque machine.
 
+### Skills Claude Code (plugins)
+
+Deux familles de skills, qui ne se synchronisent **pas** pareil :
+
+1. **Skills du projet** (`skills/` à la racine : `42api-fetch`, `bet-points-calc`,
+   `coalition-badge`, `solid-principles`, etc.) — **versionnés dans git**.
+   `git pull` les récupère automatiquement. Rien à faire.
+
+2. **Skills « superpowers » & co** (`brainstorming`, `writing-plans`,
+   `subagent-driven-development`, `code-review`, `frontend-design`, `claude-mem`…)
+   — ce sont des **plugins Claude Code** installés au niveau utilisateur
+   (`~/.claude/plugins/`), **hors du repo**. `git pull` ne les amène pas : il faut
+   les réinstaller. Dans Claude Code, sur la nouvelle machine :
+
+   ```text
+   /plugin marketplace add anthropics/claude-plugins-official
+   /plugin marketplace add thedotmack/claude-mem
+
+   /plugin install superpowers@claude-plugins-official
+   /plugin install code-review@claude-plugins-official
+   /plugin install frontend-design@claude-plugins-official
+   /plugin install claude-mem@thedotmack
+   ```
+
+   Versions de référence à ce jour : superpowers `5.1.0`, claude-mem `13.4.0`
+   (les `unknown` de `code-review`/`frontend-design` se résolvent à l'install).
+   Les marketplaces ne s'ajoutent qu'une fois ; ensuite `/plugin` (interactif)
+   suffit pour gérer/mettre à jour.
+
+> Les skills externes éventuels dans `~/.agents/skills/` (`vercel-*`,
+> `web-design-guidelines`…) sont aussi hors repo, mais accessoires pour le dev
+> 42Bet — à recopier depuis leur source si besoin.
+
 ---
 
 ## 2. Vérifications avant tout commit / déploiement
