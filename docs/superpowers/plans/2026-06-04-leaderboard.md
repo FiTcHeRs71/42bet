@@ -10,6 +10,17 @@
 
 **Référence spec :** `docs/superpowers/specs/2026-06-04-leaderboard-design.md`
 
+## État d'avancement (maj 2026-06-04) — ✅ LIVRÉ
+
+Exécution inline sur `feat/leaderboard`, mergée dans `main` (`2015634`), branche supprimée.
+**Avec cette brique, le MVP est complet (5/5).**
+
+- [x] **Task 1 — `leaderboard.ts`** (pur, 9 tests) — commit `9ffc8c7`.
+- [x] **Task 2 — I/O `listPlayers` + `listAllBets`** (server-only) — commit `7b8db1c`.
+- [x] **Task 3 — `coalition-badge.tsx`** (matérialise la skill) — commit `df65755`.
+- [x] **Task 4 — `page.tsx` + lien nav** — commit `4e3b12a`. Build ✅ (`/leaderboard` ƒ Dynamic).
+- [x] **Task 5 — gates finaux** : 64 tests · typecheck · lint · build · anti-secret ✅. Merge `2015634`.
+
 **Branche :** créer `feat/leaderboard` depuis `main` avant la Task 1 :
 ```bash
 git checkout main && git checkout -b feat/leaderboard

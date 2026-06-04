@@ -2,7 +2,7 @@
 
 Web app de pronostics foot **sans argent réel** pour les étudiants et piscineux de l'École 42 Lausanne, à l'occasion de la Coupe du Monde + nouvelle Piscine 42.
 
-> 🚧 En cours de développement.
+> 🚧 En cours de développement — **MVP complet** (auth 42, liste des matchs, paris, scoring, classement), phase **pré-déploiement**.
 
 ## Concept
 
