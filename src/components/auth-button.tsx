@@ -3,6 +3,8 @@
 // soit l'avatar + login + déconnexion. signIn/signOut via server actions.
 // <img> brut volontaire : l'hôte de l'avatar 42 varie, on évite de coupler
 // next/image à un remotePatterns figé pour cette brique.
+import Link from "next/link";
+
 import { auth, signIn, signOut } from "@/lib/auth/config";
 
 export async function AuthButton() {
@@ -29,17 +31,23 @@ export async function AuthButton() {
   const { login, avatarUrl } = session.user;
   return (
     <div className="flex items-center gap-3">
-      {avatarUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={avatarUrl}
-          alt={login}
-          width={32}
-          height={32}
-          className="rounded-full ring-1 ring-white/15"
-        />
-      )}
-      <span className="hidden text-sm font-medium sm:inline">{login}</span>
+      <Link
+        href={`/profile/${login}`}
+        className="flex items-center gap-2 rounded-full transition-opacity hover:opacity-80"
+        aria-label="Mon profil"
+      >
+        {avatarUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt={login}
+            width={32}
+            height={32}
+            className="rounded-full ring-1 ring-white/15"
+          />
+        )}
+        <span className="hidden text-sm font-medium sm:inline">{login}</span>
+      </Link>
       <form
         action={async () => {
           "use server";

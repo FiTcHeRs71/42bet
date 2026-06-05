@@ -32,7 +32,7 @@ export function MatchRow({
   const hasScore = match.home_score !== null && match.away_score !== null;
 
   return (
-    <li className="flex items-center gap-3 px-4 py-3 text-sm sm:gap-4">
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 text-sm sm:flex-nowrap sm:gap-4">
       <span className="w-12 shrink-0 tabular-nums text-zinc-400">
         {TIME_FMT.format(new Date(match.kickoff_at))}
       </span>
@@ -47,7 +47,7 @@ export function MatchRow({
 
       <span className="flex-1 font-medium">{match.away_team}</span>
 
-      <span className="flex min-w-[8rem] shrink-0 justify-end text-right text-xs text-zinc-400">
+      <span className="flex w-full justify-end text-right text-xs text-zinc-400 sm:w-auto sm:min-w-[8rem] sm:shrink-0">
         <BetCell
           match={match}
           state={state}
