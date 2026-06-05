@@ -1,26 +1,71 @@
 @import "tailwindcss";
 
+/* Dark-only : on bascule la variante `dark:` en mode classe (pilotée par
+   <html class="dark">) au lieu de prefers-color-scheme. Toutes les classes
+   dark: existantes des composants restent ainsi actives. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0b0b16;
+  --surface: #15151f;
+  --foreground: #ededf2;
+  --accent: #7c3aed;
+  --accent-2: #6d28d9;
+  --cyan: #06b6d4;
+  --success: #34d399;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-cyan: var(--cyan);
+  --color-success: var(--success);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+@layer components {
+  .glass {
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-radius: 1rem;
+  }
+  .glass-strong {
+    background: rgba(11, 11, 22, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+  }
+  /* Fallback navigateurs sans backdrop-filter : plus d'opacité. */
+  @supports not (backdrop-filter: blur(1px)) {
+    .glass { background: rgba(21, 21, 31, 0.92); }
+    .glass-strong { background: rgba(11, 11, 22, 0.95); }
+  }
+}
+
+@layer utilities {
+  .rise { animation: rise 0.4s ease both; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
