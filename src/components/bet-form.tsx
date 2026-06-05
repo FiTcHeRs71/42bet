@@ -22,7 +22,7 @@ function SubmitButton({ hasBet }: { hasBet: boolean }) {
     <button
       type="submit"
       disabled={pending}
-      className="rounded bg-zinc-900 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50 dark:bg-white dark:text-zinc-900"
+      className="h-11 shrink-0 rounded-lg bg-gradient-to-r from-accent to-accent-2 px-5 text-sm font-semibold text-white shadow shadow-accent/30 transition-transform active:scale-[0.98] disabled:opacity-50 sm:h-7 sm:px-3 sm:text-xs"
     >
       {pending ? "…" : hasBet ? "Modifier" : "Parier"}
     </button>
@@ -47,31 +47,38 @@ export function BetForm({
   }
 
   return (
-    <form action={action} className="flex items-center gap-1">
+    <form
+      action={action}
+      className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end sm:gap-1"
+    >
       <input type="hidden" name="matchId" value={matchId} />
-      <input
-        type="number"
-        name="homeScore"
-        min={0}
-        max={99}
-        required
-        defaultValue={defaultHome}
-        aria-label="Score domicile"
-        className="w-10 rounded border border-black/15 bg-transparent px-1 py-0.5 text-center tabular-nums dark:border-white/15"
-      />
-      <span className="text-zinc-400">-</span>
-      <input
-        type="number"
-        name="awayScore"
-        min={0}
-        max={99}
-        required
-        defaultValue={defaultAway}
-        aria-label="Score extérieur"
-        className="w-10 rounded border border-black/15 bg-transparent px-1 py-0.5 text-center tabular-nums dark:border-white/15"
-      />
-      <SubmitButton hasBet={hasBet} />
-      {message && <span className="text-xs text-zinc-500">{message}</span>}
+      <div className="flex items-center gap-2 sm:gap-1">
+        <input
+          type="number"
+          name="homeScore"
+          min={0}
+          max={99}
+          required
+          defaultValue={defaultHome}
+          aria-label="Score domicile"
+          className="h-11 w-12 rounded-lg border border-white/15 bg-white/5 text-center text-base tabular-nums outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/40 sm:h-7 sm:w-10 sm:text-sm"
+        />
+        <span className="text-zinc-400">-</span>
+        <input
+          type="number"
+          name="awayScore"
+          min={0}
+          max={99}
+          required
+          defaultValue={defaultAway}
+          aria-label="Score extérieur"
+          className="h-11 w-12 rounded-lg border border-white/15 bg-white/5 text-center text-base tabular-nums outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/40 sm:h-7 sm:w-10 sm:text-sm"
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        {message && <span className="text-xs text-zinc-400">{message}</span>}
+        <SubmitButton hasBet={hasBet} />
+      </div>
     </form>
   );
 }

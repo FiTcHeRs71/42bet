@@ -29,16 +29,20 @@ Specs/plans correspondants dans `docs/superpowers/specs/` et `.../plans/`
 
 ---
 
-## 2. En cours : refonte UI — **spec + plan écrits, prêts à exécuter**
+## 2. Refonte UI glassy — ✅ LIVRÉE (branche `feat/ui-glassy`)
 
-**Direction retenue par l'utilisateur** : style **glassy / épuré façon Apple**,
-avec un travail spécifique de la **vue mobile**.
+**Direction retenue** : style **glassy / épuré façon Apple**, sombre vibrant
+(halos violet/cyan), avec **bottom-nav mobile** dédiée.
 
-➡️ **Reprise (sur l'autre ordi)** : `git pull`, puis exécuter le plan
-`docs/superpowers/plans/2026-06-05-refonte-ui-glassy.md` (10 tâches, présentation
-only). Skill recommandée : `superpowers:subagent-driven-development` (un
-sous-agent par tâche) ou `superpowers:executing-plans` (inline). Spec de
-référence : `docs/superpowers/specs/2026-06-05-refonte-ui-glassy-design.md`.
+Les 10 tâches du plan `docs/superpowers/plans/2026-06-05-refonte-ui-glassy.md`
+sont implémentées (présentation pure, aucun `src/lib/**` ni data touché) :
+thème glassy (tokens `@theme`, dark forcé, classes `glass`/`glass-strong`),
+`AppBackground` (halos), header glass sticky + `NavLink`, `BottomNav` mobile,
+auth-button accent, pages `/matches` `/leaderboard` `/profile/[login]` en cartes
+glass, home enrichie (hero + prochains matchs + top 3), passe polish
+(`rise`, `prefers-reduced-motion`). Filet : **75 tests verts** + typecheck +
+lint + build à chaque tâche. Résidus scaffold corrigés au passage
+(`font-family: Arial` → Geist, `lang="en"` → `lang="fr"`).
 
 **Décisions de cadrage tranchées** : sombre vibrant (dark only) + halos
 violet/cyan · thème global d'abord · bottom tab bar mobile (desktop = nav
@@ -98,5 +102,5 @@ archi thème = approche A (tokens `@theme` + classes glass, dark forcé via
 
 1. Régénérer `FT_API_SECRET` sur intra 42 (sécurité — partagé en clair) → `.env.local`.
 2. Déploiement Vercel (env vars + cron `sync-results`) ; réactiver PR + protection `main`.
-3. Enrichir la home `/` (peut se faire DANS la refonte UI).
+3. ~~Enrichir la home `/`~~ ✓ fait dans la refonte UI (hero + prochains matchs + top 3).
 4. Bonus restant : notifications / feed d'activité.
