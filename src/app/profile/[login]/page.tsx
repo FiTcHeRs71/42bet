@@ -40,16 +40,16 @@ export default async function ProfilePage({
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 p-6">
       {/* En-tête */}
-      <header className="mb-6 flex items-center gap-4">
+      <header className="glass mb-6 flex items-center gap-4 p-4">
         {player.avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={player.avatar_url}
             alt=""
-            className="h-16 w-16 shrink-0 rounded-full object-cover"
+            className="h-16 w-16 shrink-0 rounded-full object-cover ring-1 ring-white/15"
           />
         ) : (
-          <span className="h-16 w-16 shrink-0 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+          <span className="h-16 w-16 shrink-0 rounded-full bg-white/10" />
         )}
         <div className="min-w-0">
           <h1 className="truncate text-2xl font-bold tracking-tight">
@@ -81,7 +81,7 @@ export default async function ProfilePage({
         Historique
       </h2>
       {history.length === 0 ? (
-        <p className="text-zinc-500">Aucun pronostic pour l&apos;instant.</p>
+        <p className="text-zinc-400">Aucun pronostic pour l&apos;instant.</p>
       ) : (
         <ul className="space-y-2">
           {history.map((h) => {
@@ -90,20 +90,20 @@ export default async function ProfilePage({
             return (
               <li
                 key={h.matchId}
-                className="flex items-center gap-3 rounded-lg border border-black/10 px-4 py-3 text-sm dark:border-white/10"
+                className="glass flex items-center gap-3 px-4 py-3 text-sm"
               >
                 <span className="flex-1 truncate">
-                  {h.homeTeam} <span className="text-zinc-400">vs</span>{" "}
+                  {h.homeTeam} <span className="text-zinc-500">vs</span>{" "}
                   {h.awayTeam}
                 </span>
-                <span className="shrink-0 tabular-nums text-zinc-500">
+                <span className="shrink-0 tabular-nums text-zinc-400">
                   prono {h.predictedHome}–{h.predictedAway}
                 </span>
-                <span className="w-14 shrink-0 text-right tabular-nums font-medium">
+                <span className="w-14 shrink-0 text-right font-medium tabular-nums">
                   {finished ? `${h.actualHome}–${h.actualAway}` : "—"}
                 </span>
                 <span
-                  className={`shrink-0 rounded px-2 py-0.5 text-xs font-medium ${o.cls}`}
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${o.cls}`}
                 >
                   {o.label}
                 </span>
@@ -118,7 +118,7 @@ export default async function ProfilePage({
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-black/10 px-2 py-3 dark:border-white/10">
+    <div className="glass px-2 py-3">
       <dt className="text-[11px] uppercase tracking-wide text-zinc-400">
         {label}
       </dt>
