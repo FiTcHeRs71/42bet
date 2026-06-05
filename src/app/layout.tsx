@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { AppBackground } from "@/components/app-background";
+import { BottomNav } from "@/components/bottom-nav";
+import { auth, signIn } from "@/lib/auth/config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,11 +21,14 @@ export const metadata: Metadata = {
   description: "Pronostics foot sans argent réel pour l'École 42 Lausanne.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+  const login = session?.user?.login ?? null;
+
   return (
     <html
       lang="fr"
@@ -33,6 +38,13 @@ export default function RootLayout({
         <AppBackground />
         <SiteHeader />
         {children}
+        <BottomNav
+          login={login}
+          signInAction={async () => {
+            "use server";
+            await signIn("42");
+          }}
+        />
       </body>
     </html>
   );
