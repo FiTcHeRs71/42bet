@@ -2,8 +2,10 @@
 import { describe, test, expect } from "vitest";
 
 import {
+  buildCoalitionLeaderboard,
   buildLeaderboard,
   type LeaderboardBet,
+  type LeaderboardEntry,
   type LeaderboardPlayer,
 } from "../src/lib/leaderboard";
 
@@ -98,5 +100,79 @@ describe("buildLeaderboard", () => {
     const bets: LeaderboardBet[] = [{ user_id: "u1", points_awarded: 1 }];
     const r = buildLeaderboard(players, bets);
     expect(r[0].coalition).toEqual(COA);
+  });
+});
+
+const FED = { name: "Federation", color: "#39c2c2", image_url: null };
+const ORDER = { name: "Order", color: "#9b59b6", image_url: null };
+const ALLI = { name: "Alliance", color: "#e67e22", image_url: null };
+
+function entry(
+  login: string,
+  points: number,
+  coalition: LeaderboardEntry["coalition"],
+): LeaderboardEntry {
+  return {
+    rank: 0,
+    login,
+    avatarUrl: null,
+    coalition,
+    points,
+    bets: 0,
+    accuracy: null,
+  };
+}
+
+describe("buildCoalitionLeaderboard", () => {
+  test("aucune entrée -> []", () => {
+    expect(buildCoalitionLeaderboard([])).toEqual([]);
+  });
+
+  test("entrées sans coalition -> exclues", () => {
+    const entries = [entry("alice", 5, null), entry("bob", 3, null)];
+    expect(buildCoalitionLeaderboard(entries)).toEqual([]);
+  });
+
+  test("agrège total, nb joueurs et moyenne par coalition", () => {
+    const entries = [
+      entry("alice", 3, FED),
+      entry("bob", 1, FED),
+      entry("carol", 5, ORDER),
+    ];
+    const r = buildCoalitionLeaderboard(entries);
+    const fed = r.find((c) => c.coalition.name === "Federation")!;
+    const order = r.find((c) => c.coalition.name === "Order")!;
+    expect(fed.totalPoints).toBe(4);
+    expect(fed.players).toBe(2);
+    expect(fed.average).toBe(2);
+    expect(order.totalPoints).toBe(5);
+    expect(order.players).toBe(1);
+    expect(order.average).toBe(5);
+  });
+
+  test("tri par moyenne décroissante : petite coalition efficace devant", () => {
+    const entries = [
+      entry("alice", 3, FED),
+      entry("bob", 1, FED),
+      entry("carol", 5, ORDER),
+    ];
+    const r = buildCoalitionLeaderboard(entries);
+    expect(r.map((c) => c.coalition.name)).toEqual(["Order", "Federation"]);
+    expect(r.map((c) => c.rank)).toEqual([1, 2]);
+  });
+
+  test("ex æquo sur la moyenne -> rang 1,1,3, départage total puis name", () => {
+    const entries = [
+      entry("alice", 2, ORDER),
+      entry("bob", 2, FED),
+      entry("carol", 1, ALLI),
+    ];
+    const r = buildCoalitionLeaderboard(entries);
+    expect(r.map((c) => c.coalition.name)).toEqual([
+      "Federation",
+      "Order",
+      "Alliance",
+    ]);
+    expect(r.map((c) => c.rank)).toEqual([1, 1, 3]);
   });
 });
