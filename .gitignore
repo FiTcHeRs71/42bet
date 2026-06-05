@@ -58,3 +58,6 @@ supabase/.temp
 
 # obsidian (local config)
 .obsidian/
+
+# Superpowers brainstorm visual companion (local, non versionné)
+.superpowers/
