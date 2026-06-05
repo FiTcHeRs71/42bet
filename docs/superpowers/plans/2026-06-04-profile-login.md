@@ -12,6 +12,18 @@
 
 ---
 
+## État d'avancement (maj 2026-06-05) — ✅ LIVRÉ
+
+Exécution subagent-driven sur `feat/profile`, mergée dans `main` (`64f3b2e`),
+branche supprimée, poussée sur origin. 70 tests verts (64 + 6).
+
+- [x] **Task 1 — `buildProfileHistory` pur + types** (6 tests) — commit `b3e6ff9`.
+- [x] **Task 2 — I/O `listBetsWithMatchByUser`** (server-only) — commit `47c38f3`.
+- [x] **Task 3 — page `/profile/[login]`** (en-tête + stats + timeline) — commit `2999b0f`. Build ✅ (`/profile/[login]` ƒ Dynamic).
+- [x] **Task 4 — lien login → profil depuis `/leaderboard`** — commit `900e68a`.
+
+---
+
 ## File Structure
 
 | Fichier | Responsabilité | Type |

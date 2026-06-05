@@ -12,6 +12,16 @@
 
 ---
 
+## État d'avancement (maj 2026-06-05) — ✅ LIVRÉ
+
+Exécution subagent-driven sur `feat/coalition-leaderboard`, mergée dans `main`
+(`86f549d`), branche supprimée, poussée sur origin. 75 tests verts (70 + 5).
+
+- [x] **Task 1 — `buildCoalitionLeaderboard` pur + type `CoalitionStanding`** (5 tests) — commit `ee32c33`.
+- [x] **Task 2 — section « Par coalition » sur `/leaderboard`** — commit `fd5be9f`. Build ✅ (`/leaderboard` ƒ Dynamic).
+
+---
+
 ## File Structure
 
 | Fichier | Responsabilité | Type |
