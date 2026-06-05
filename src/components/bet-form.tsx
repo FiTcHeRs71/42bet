@@ -22,7 +22,7 @@ function SubmitButton({ hasBet }: { hasBet: boolean }) {
     <button
       type="submit"
       disabled={pending}
-      className="rounded bg-zinc-900 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50 dark:bg-white dark:text-zinc-900"
+      className="rounded-lg bg-gradient-to-r from-accent to-accent-2 px-3 py-1 text-xs font-semibold text-white shadow shadow-accent/30 transition-transform active:scale-[0.98] disabled:opacity-50"
     >
       {pending ? "…" : hasBet ? "Modifier" : "Parier"}
     </button>
@@ -57,7 +57,7 @@ export function BetForm({
         required
         defaultValue={defaultHome}
         aria-label="Score domicile"
-        className="w-10 rounded border border-black/15 bg-transparent px-1 py-0.5 text-center tabular-nums dark:border-white/15"
+        className="w-10 rounded-lg border border-white/15 bg-white/5 px-1 py-1 text-center tabular-nums outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/40"
       />
       <span className="text-zinc-400">-</span>
       <input
@@ -68,10 +68,10 @@ export function BetForm({
         required
         defaultValue={defaultAway}
         aria-label="Score extérieur"
-        className="w-10 rounded border border-black/15 bg-transparent px-1 py-0.5 text-center tabular-nums dark:border-white/15"
+        className="w-10 rounded-lg border border-white/15 bg-white/5 px-1 py-1 text-center tabular-nums outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/40"
       />
       <SubmitButton hasBet={hasBet} />
-      {message && <span className="text-xs text-zinc-500">{message}</span>}
+      {message && <span className="text-xs text-zinc-400">{message}</span>}
     </form>
   );
 }

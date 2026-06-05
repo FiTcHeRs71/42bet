@@ -41,15 +41,15 @@ export default async function MatchesPage() {
       <h1 className="mb-6 text-2xl font-bold tracking-tight">Matchs</h1>
 
       {days.length === 0 ? (
-        <p className="text-zinc-500">Aucun match pour l&apos;instant.</p>
+        <p className="text-zinc-400">Aucun match pour l&apos;instant.</p>
       ) : (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-6">
           {days.map((day) => (
-            <section key={day.dayKey}>
-              <h2 className="mb-2 text-sm font-semibold capitalize text-zinc-500">
+            <section key={day.dayKey} className="rise">
+              <h2 className="mb-2 px-1 text-sm font-semibold capitalize text-zinc-400">
                 {DAY_FMT.format(new Date(day.matches[0].kickoff_at))}
               </h2>
-              <ul className="divide-y divide-black/5 rounded-lg border border-black/10 dark:divide-white/5 dark:border-white/10">
+              <ul className="glass divide-y divide-white/5 overflow-hidden">
                 {day.matches.map((match) => (
                   <MatchRow
                     key={match.id}

@@ -32,14 +32,14 @@ export function MatchRow({
   const hasScore = match.home_score !== null && match.away_score !== null;
 
   return (
-    <li className="flex items-center gap-4 px-4 py-3 text-sm">
-      <span className="w-12 shrink-0 tabular-nums text-zinc-500">
+    <li className="flex items-center gap-3 px-4 py-3 text-sm sm:gap-4">
+      <span className="w-12 shrink-0 tabular-nums text-zinc-400">
         {TIME_FMT.format(new Date(match.kickoff_at))}
       </span>
 
       <span className="flex-1 text-right font-medium">{match.home_team}</span>
 
-      <span className="w-14 shrink-0 text-center tabular-nums font-semibold">
+      <span className="w-14 shrink-0 text-center font-bold tabular-nums">
         {isFinished && hasScore
           ? `${match.home_score} - ${match.away_score}`
           : "–"}
@@ -47,7 +47,7 @@ export function MatchRow({
 
       <span className="flex-1 font-medium">{match.away_team}</span>
 
-      <span className="flex min-w-[8rem] shrink-0 justify-end text-right text-xs text-zinc-500">
+      <span className="flex min-w-[8rem] shrink-0 justify-end text-right text-xs text-zinc-400">
         <BetCell
           match={match}
           state={state}
@@ -82,7 +82,7 @@ function BetCell({
         >
           <button
             type="submit"
-            className="underline hover:text-zinc-700 dark:hover:text-zinc-300"
+            className="text-accent underline-offset-2 transition-colors hover:text-foreground hover:underline"
           >
             Connecte-toi pour parier
           </button>
@@ -102,12 +102,12 @@ function BetCell({
   if (state === "finished") {
     if (!bet) return <span>terminé</span>;
     return (
-      <span className="tabular-nums">
-        Prono {bet.home_score}-{bet.away_score}
+      <span className="inline-flex items-center gap-1.5 tabular-nums">
+        <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[11px] font-semibold text-accent">
+          {bet.home_score}-{bet.away_score}
+        </span>
         {bet.points_awarded !== null && (
-          <span className="ml-1 font-semibold text-zinc-700 dark:text-zinc-300">
-            +{bet.points_awarded}
-          </span>
+          <span className="font-bold text-success">+{bet.points_awarded}</span>
         )}
       </span>
     );
@@ -116,8 +116,11 @@ function BetCell({
   // En cours : prono figé (lecture seule) si présent.
   if (state === "live") {
     return bet ? (
-      <span className="tabular-nums">
-        Prono {bet.home_score}-{bet.away_score} · en cours
+      <span className="inline-flex items-center gap-1.5 tabular-nums">
+        <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[11px] font-semibold text-accent">
+          {bet.home_score}-{bet.away_score}
+        </span>
+        <span className="text-zinc-400">en cours</span>
       </span>
     ) : (
       <span>en cours</span>
