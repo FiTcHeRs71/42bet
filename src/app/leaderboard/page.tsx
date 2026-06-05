@@ -25,7 +25,7 @@ export default async function LeaderboardPage() {
   const coalitions = buildCoalitionLeaderboard(entries);
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 p-6">
+    <main className="rise mx-auto w-full max-w-2xl flex-1 p-6">
       <h1 className="mb-6 text-2xl font-bold tracking-tight">Classement</h1>
 
       {entries.length === 0 ? (

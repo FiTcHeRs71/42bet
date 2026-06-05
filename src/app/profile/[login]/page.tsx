@@ -38,7 +38,7 @@ export default async function ProfilePage({
   const history = buildProfileHistory(await listBetsWithMatchByUser(player.id));
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 p-6">
+    <main className="rise mx-auto w-full max-w-2xl flex-1 p-6">
       {/* En-tête */}
       <header className="glass mb-6 flex items-center gap-4 p-4">
         {player.avatar_url ? (
