@@ -29,7 +29,7 @@ export default async function LeaderboardPage() {
       <h1 className="mb-6 text-2xl font-bold tracking-tight">Classement</h1>
 
       {entries.length === 0 ? (
-        <p className="text-zinc-500">Aucun pronostic pour l&apos;instant.</p>
+        <p className="text-zinc-400">Aucun pronostic pour l&apos;instant.</p>
       ) : (
         <>
           {coalitions.length > 0 && (
@@ -37,13 +37,13 @@ export default async function LeaderboardPage() {
               <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-400">
                 Par coalition
               </h2>
-              <ul className="divide-y divide-black/5 rounded-lg border border-black/10 dark:divide-white/5 dark:border-white/10">
+              <ul className="glass divide-y divide-white/5 overflow-hidden">
                 {coalitions.map((c) => (
                   <li
                     key={c.coalition.name}
                     className="flex items-center gap-3 px-4 py-3 text-sm"
                   >
-                    <span className="w-6 shrink-0 text-center font-semibold tabular-nums text-zinc-500">
+                    <span className="w-6 shrink-0 text-center font-bold tabular-nums text-zinc-400">
                       {c.rank}
                     </span>
                     <CoalitionBadge coalition={c.coalition} size="md" />
@@ -51,10 +51,10 @@ export default async function LeaderboardPage() {
                     <span className="shrink-0 text-right font-semibold tabular-nums">
                       {AVG_FMT.format(c.average)} pt/j
                     </span>
-                    <span className="w-14 shrink-0 text-right tabular-nums text-zinc-500">
+                    <span className="w-14 shrink-0 text-right tabular-nums text-zinc-400">
                       {c.totalPoints} pt
                     </span>
-                    <span className="w-20 shrink-0 text-right tabular-nums text-zinc-500">
+                    <span className="w-20 shrink-0 text-right tabular-nums text-zinc-400">
                       {c.players} {c.players > 1 ? "joueurs" : "joueur"}
                     </span>
                   </li>
@@ -75,13 +75,17 @@ export default async function LeaderboardPage() {
             <span className="w-12 text-right">Points</span>
           </div>
 
-          <ul className="divide-y divide-black/5 rounded-lg border border-black/10 dark:divide-white/5 dark:border-white/10">
+          <ul className="glass divide-y divide-white/5 overflow-hidden">
             {entries.map((e) => (
               <li
                 key={e.login}
                 className="flex items-center gap-3 px-4 py-3 text-sm"
               >
-                <span className="w-6 shrink-0 text-center font-semibold tabular-nums text-zinc-500">
+                <span
+                  className={`w-6 shrink-0 text-center font-bold tabular-nums ${
+                    e.rank <= 3 ? "text-accent" : "text-zinc-400"
+                  }`}
+                >
                   {e.rank}
                 </span>
                 {e.avatarUrl ? (
@@ -92,11 +96,11 @@ export default async function LeaderboardPage() {
                     className="h-8 w-8 shrink-0 rounded-full object-cover"
                   />
                 ) : (
-                  <span className="h-8 w-8 shrink-0 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+                  <span className="h-8 w-8 shrink-0 rounded-full bg-white/10" />
                 )}
                 <Link
                   href={`/profile/${e.login}`}
-                  className="flex-1 truncate font-medium hover:underline"
+                  className="flex-1 truncate font-medium transition-colors hover:text-accent"
                 >
                   {e.login}
                 </Link>
@@ -104,7 +108,7 @@ export default async function LeaderboardPage() {
                 <span className="w-14 shrink-0 text-right tabular-nums">
                   {e.accuracy === null ? "—" : PCT_FMT.format(e.accuracy)}
                 </span>
-                <span className="w-10 shrink-0 text-right tabular-nums text-zinc-500">
+                <span className="w-10 shrink-0 text-right tabular-nums text-zinc-400">
                   {e.bets}
                 </span>
                 <span className="w-12 shrink-0 text-right font-semibold tabular-nums">
