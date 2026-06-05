@@ -29,10 +29,22 @@ Specs/plans correspondants dans `docs/superpowers/specs/` et `.../plans/`
 
 ---
 
-## 2. En cours : refonte UI (brainstorm démarré, PAS encore de spec)
+## 2. En cours : refonte UI — **spec + plan écrits, prêts à exécuter**
 
 **Direction retenue par l'utilisateur** : style **glassy / épuré façon Apple**,
 avec un travail spécifique de la **vue mobile**.
+
+➡️ **Reprise (sur l'autre ordi)** : `git pull`, puis exécuter le plan
+`docs/superpowers/plans/2026-06-05-refonte-ui-glassy.md` (10 tâches, présentation
+only). Skill recommandée : `superpowers:subagent-driven-development` (un
+sous-agent par tâche) ou `superpowers:executing-plans` (inline). Spec de
+référence : `docs/superpowers/specs/2026-06-05-refonte-ui-glassy-design.md`.
+
+**Décisions de cadrage tranchées** : sombre vibrant (dark only) + halos
+violet/cyan · thème global d'abord · bottom tab bar mobile (desktop = nav
+horizontale) · animations « subtil & soigné » (`prefers-reduced-motion`) ·
+archi thème = approche A (tokens `@theme` + classes glass, dark forcé via
+`@custom-variant`). Aucune tâche ne touche `src/lib/**` ni la data.
 
 **Skills à utiliser à l'implémentation** (installés comme plugins, cf. deploy.md §1) :
 - `emil-design-eng` — polish UI, animations, détails invisibles (philosophie Emil Kowalski).
