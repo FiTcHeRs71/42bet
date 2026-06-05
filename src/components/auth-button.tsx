@@ -18,7 +18,7 @@ export async function AuthButton() {
       >
         <button
           type="submit"
-          className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
+          className="rounded-xl bg-gradient-to-r from-accent to-accent-2 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-accent/30 transition-transform active:scale-[0.98]"
         >
           Se connecter avec 42
         </button>
@@ -36,17 +36,20 @@ export async function AuthButton() {
           alt={login}
           width={32}
           height={32}
-          className="rounded-full"
+          className="rounded-full ring-1 ring-white/15"
         />
       )}
-      <span className="text-sm font-medium">{login}</span>
+      <span className="hidden text-sm font-medium sm:inline">{login}</span>
       <form
         action={async () => {
           "use server";
           await signOut();
         }}
       >
-        <button type="submit" className="text-sm text-zinc-500 underline">
+        <button
+          type="submit"
+          className="text-sm text-zinc-400 transition-colors hover:text-foreground"
+        >
           Déconnexion
         </button>
       </form>
