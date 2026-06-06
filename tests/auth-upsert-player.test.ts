@@ -62,6 +62,19 @@ describe("upsertPlayer", () => {
     expect(deps.setCoalition).not.toHaveBeenCalled();
   });
 
+  it("does not link (nor fail login) when the coalition upsert errors", async () => {
+    const deps = baseDeps({
+      fetchUserCoalitions: vi
+        .fn()
+        .mockResolvedValue([{ id: 7, name: "Order", color: "#3fb27f" }]),
+      upsertCoalition: vi
+        .fn()
+        .mockResolvedValue({ id: null, error: { message: "db error" } }),
+    });
+    await expect(upsertPlayer(profile, deps)).resolves.toBeUndefined();
+    expect(deps.setCoalition).not.toHaveBeenCalled();
+  });
+
   it("never fails login when the coalition fetch throws", async () => {
     const deps = baseDeps({
       fetchUserCoalitions: vi.fn().mockRejectedValue(new Error("42 api down")),
