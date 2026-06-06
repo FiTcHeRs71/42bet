@@ -220,6 +220,7 @@ export type Database = {
         }
         Returns: Json
       }
+      upsert_matches: { Args: { p_matches: Json }; Returns: Json }
     }
     Enums: {
       match_status:
