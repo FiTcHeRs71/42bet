@@ -5,6 +5,13 @@
 >
 > Pour le setup d'une nouvelle machine (clone, `.env.local`, plugins/skills
 > Claude Code) → voir [`deploy.md`](./deploy.md) §1.
+> Pour comprendre l'app (onboarding) → [`README.md`](./README.md) →
+> [`architecture.md`](./architecture.md).
+
+> ⚙️ **Changement de workflow (2026-06-06)** : le projet repasse **en binôme** →
+> **flux PR obligatoire** réactivé (review + merge squash, plus de merge direct
+> sur `main`). Cf. [`AGENTS.md`](../AGENTS.md) §8. Doc d'onboarding complétée :
+> `architecture.md`, `api-42.md`, `football-data.md` ajoutés.
 
 ---
 
@@ -140,7 +147,8 @@ archi thème = approche A (tokens `@theme` + classes glass, dark forcé via
    image) + assignation de la coalition du joueur au login.
 2. Régénérer `FT_API_SECRET` sur intra 42 (sécurité — partagé en clair) → `.env.local`.
 3. Déploiement Vercel (env vars + **2 crons** : `sync-results` */5, `sync-matches`
-   quotidien) ; réactiver PR + protection `main`.
+   quotidien). ⚠️ Flux **PR réactivé dès maintenant** (binôme, cf. AGENTS §8) ;
+   activer la **protection de branche `main`** sur GitHub (review requise).
 4. ~~Enrichir la home `/`~~ ✓ fait dans la refonte UI.
 5. ~~Ingestion des matchs CM + test scoring~~ ✓ fait (§1bis).
 6. Bonus restant : notifications / feed d'activité.

@@ -8,9 +8,9 @@
 
 **42Bet** — web app de pronostics foot **sans argent réel** pour les étudiants et piscineux de l'**École 42 Lausanne**, à l'occasion de la Coupe du Monde + nouvelle Piscine 42.
 
-- Projet **solo** (full-stack)
-- Statut : **pré-MVP**, pas encore déployé
-- Source de vérité métier : [`brainstorming.md`](./brainstorming.md) *(rédigé à l'origine pour un duo — référence historique, le projet est aujourd'hui mené seul)*
+- Projet **en binôme** (full-stack) — deux contributeurs
+- Statut : **MVP complet + bonus livrés**, pas encore déployé
+- Source de vérité métier : [`brainstorming.md`](./brainstorming.md) *(spec d'origine, rédigée pour un duo)*
 
 ## 2. Stack (versions exactes)
 
@@ -132,19 +132,23 @@ Toutes listées dans [`.env.local.example`](./.env.local.example). Pour ajouter 
 - Format des commits : voir [`conventional-commits`](./skills/conventional-commits/SKILL.md)
 - Branche par feature : `git checkout -b feat/<slug>`
 
-**Phase actuelle — pré-déploiement (workflow assoupli)** : tant que le projet
-n'est **pas déployé**, **pas de PR obligatoire**. On travaille en branche par
-feature puis `git merge --no-ff` dans `main` en **local**, après :
-1. self-review rapide du diff au moment du merge,
-2. vérifs vertes : `npm test` + `npm run typecheck` + `npm run lint`.
+**Phase actuelle — binôme : flux PR obligatoire.** Le projet est repassé à
+**deux contributeurs** : toute modif de `main` passe par une **Pull Request
+relue**. Plus de `merge --no-ff` direct en local sur `main`.
 
-But : avancer vite en solo. (On peut même committer en direct sur une petite
-branche jetable ; l'essentiel = `main` reste vert.)
+Cycle de travail :
+1. Brancher par feature : `git checkout -b feat/<slug>` (ou `fix/`, `docs/`…).
+2. Avant d'ouvrir la PR, vérifs **vertes** : `npm test` + `npm run typecheck` +
+   `npm run lint`.
+3. Ouvrir la PR en suivant le template [`pr-template`](./skills/pr-template/SKILL.md)
+   + `.github/pull_request_template.md` (une PR = un sujet).
+4. **Relecture par l'autre contributeur** (review GitHub), puis merge **squash**.
+5. `main` doit rester **vert** en permanence (protection de branche).
 
-**Au déploiement — à réactiver** : repasser en flux **PR + self-review**
-(template [`pr-template`](./skills/pr-template/SKILL.md) +
-`.github/pull_request_template.md`), merge **squash**, et **protection de
-`main`**. Les skills PR restent en place pour ce moment-là.
+But : qualité et traçabilité à deux. Aucun commit direct sur `main`.
+
+> Historique : le projet a connu une phase **solo / pré-déploiement** où les PR
+> étaient assouplies (merge `--no-ff` local). On en sort : **PR systématiques**.
 
 ## 9. Pièges Next.js 16 / Tailwind v4 / React 19
 
@@ -171,8 +175,10 @@ Si tu n'es pas sûr·e qu'une API est encore valide → vérifier dans `node_mod
 
 ## 11. Documentation détaillée
 
-Pour aller plus loin :
-- Architecture et flux de données → `docs/architecture.md` *(à rédiger)*
-- Endpoints API 42 utilisés → `docs/api-42.md` *(à rédiger)*
+Pour aller plus loin (point d'entrée onboarding : [`docs/README.md`](./docs/README.md)) :
+- Architecture et flux de données → `docs/architecture.md` ✅
+- Intégration API 42 (OAuth) → `docs/api-42.md` ✅
+- Intégration football-data.org → `docs/football-data.md` ✅
 - Schéma DB complet → `docs/database-schema.md` ✅
 - Setup machine + déploiement → `docs/deploy.md` ✅
+- Reprise de session / état courant → `docs/handoff.md` ✅
