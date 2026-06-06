@@ -8,8 +8,10 @@ import "server-only";
 import NextAuth from "next-auth";
 import FortyTwo from "next-auth/providers/42-school";
 
+import { fetch42 } from "@/lib/api-42";
 import { mapFt42Profile, type Ft42Me } from "@/lib/auth/profile";
 import { upsertPlayer, type UpsertDeps } from "@/lib/auth/upsert-player";
+import type { Ft42Coalition } from "@/lib/coalitions";
 import { requireEnv } from "@/lib/env";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import "@/lib/auth/types";
@@ -19,6 +21,32 @@ const upsertDeps: UpsertDeps = {
     const { error } = await supabaseAdmin
       .from("users")
       .upsert(row, { onConflict: "ft_id" });
+    return { error };
+  },
+  async fetchUserCoalitions(ftId) {
+    return fetch42<Ft42Coalition[]>(`/v2/users/${ftId}/coalitions`);
+  },
+  async upsertCoalition(ref) {
+    const { data, error } = await supabaseAdmin
+      .from("coalitions")
+      .upsert(
+        {
+          ft_id: ref.ftId,
+          name: ref.name,
+          color: ref.color,
+          image_url: ref.imageUrl,
+        },
+        { onConflict: "ft_id" },
+      )
+      .select("id")
+      .single();
+    return { id: data?.id ?? null, error };
+  },
+  async setCoalition(ftId, coalitionId) {
+    const { error } = await supabaseAdmin
+      .from("users")
+      .update({ coalition_id: coalitionId })
+      .eq("ft_id", ftId);
     return { error };
   },
 };
