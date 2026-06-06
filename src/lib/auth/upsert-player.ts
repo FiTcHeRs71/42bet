@@ -50,12 +50,12 @@ export async function upsertPlayer(
 
     const { id, error: upsertErr } = await deps.upsertCoalition(ref);
     if (upsertErr || !id) {
-      console.warn(`coalition upsert failed for ${profile.login}`);
+      console.warn(`coalition upsert failed for ${profile.login}`, upsertErr);
       return;
     }
 
     const { error: linkErr } = await deps.setCoalition(profile.ftId, id);
-    if (linkErr) console.warn(`coalition link failed for ${profile.login}`);
+    if (linkErr) console.warn(`coalition link failed for ${profile.login}`, linkErr);
   } catch (err) {
     console.warn(`coalition sync skipped for ${profile.login}:`, err);
   }
