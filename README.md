@@ -31,6 +31,25 @@ npm run dev
 
 Puis ouvrir http://localhost:3000.
 
+## Documentation
+
+Tu rejoins le projet ? Commence par [`docs/README.md`](./docs/README.md), qui
+donne l'ordre de lecture. En bref :
+
+- [`AGENTS.md`](./AGENTS.md) — contexte, stack, conventions, **workflow PR** (§8)
+- [`docs/architecture.md`](./docs/architecture.md) — flux de données, modules
+- [`docs/api-42.md`](./docs/api-42.md) — intégration OAuth 42
+- [`docs/football-data.md`](./docs/football-data.md) — fixtures & scoring (crons)
+- [`docs/database-schema.md`](./docs/database-schema.md) — schéma DB
+- [`docs/deploy.md`](./docs/deploy.md) — setup machine + déploiement
+
+## Contribuer
+
+Projet **en binôme** : toute modif de `main` passe par une **Pull Request relue**
+(une PR = un sujet, merge squash). Avant d'ouvrir une PR :
+`npm test` + `npm run typecheck` + `npm run lint` doivent être verts.
+Détails : [`AGENTS.md`](./AGENTS.md) §8 + [`pr-template`](./skills/pr-template/SKILL.md).
+
 ## Structure
 
 ```
