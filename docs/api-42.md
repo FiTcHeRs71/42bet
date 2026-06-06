@@ -71,25 +71,28 @@ Fichiers :
 > utilisateur**, pas par le wrapper `fetch42()` (qui, lui, utiliserait le token
 > applicatif). C'est pour ça qu'il n'apparaît pas dans `lib/`.
 
-## 4. Pas (encore) implémenté : le wrapper `fetch42()`
+## 4. Le wrapper `fetch42()` (token applicatif)
 
-La skill [`42api-fetch`](../skills/42api-fetch/SKILL.md) décrit un wrapper
-`fetch42()` **server-only, rate-limité (2 req/s), token applicatif**, à utiliser
-pour tout appel « au nom de l'app ». **Ce wrapper n'existe pas encore** dans le
-code (`src/lib/api-42.ts` est absent) parce qu'aucune feature n'en a eu besoin :
-l'auth passe par NextAuth.
+`src/lib/api-42.ts` implémente `fetch42<T>(path)` (server-only) conforme à la
+skill [`42api-fetch`](../skills/42api-fetch/SKILL.md) : token applicatif
+`client_credentials` caché en mémoire (~2h), throttle ≤ 2 req/s (`nextDelay`
+pur + queue), erreurs typées `Api42Error`. Premier usage : le **pipeline
+coalitions** (assignation au sign-in, cf. `auth/upsert-player.ts`).
 
-Il deviendra nécessaire pour le **pipeline coalitions** (backlog) :
+Endpoint utilisé : `GET /v2/users/:id/coalitions` (récupère la coalition du
+joueur connecté ; sert aussi à remplir la table `coalitions`).
 
-| Endpoint visé | Usage prévu |
+Pas encore implémenté (YAGNI, backlog) : `fetch42Paginated`,
+`GET /v2/coalitions` (coalitions sans joueur), batch `/v2/campus/33/users`.
+
+| Endpoint visé (backlog) | Usage prévu |
 |---|---|
 | `GET /v2/coalitions` | nom / couleur / image des coalitions |
-| `GET /v2/users/:id/coalitions` | coalition d'un joueur (pour le badge) |
 | `GET /v2/campus/:campus_id/users` | joueurs du campus Lausanne |
 
-**Quand on l'écrira** : suivre la skill `42api-fetch` (server-only, throttle
-2 req/s, token jamais loggé). Anti-pattern à refuser : `fetch` direct vers
-`api.intra.42.fr` (cf. AGENTS §10).
+**Règle** : suivre la skill `42api-fetch` (server-only, throttle 2 req/s, token
+jamais loggé). Anti-pattern à refuser : `fetch` direct vers `api.intra.42.fr`
+(cf. AGENTS §10).
 
 ## 5. Ressources
 
