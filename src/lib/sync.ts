@@ -24,7 +24,9 @@ export type FinishedMatch = {
 export function parseFinishedMatches(res: FootballDataResponse): FinishedMatch[] {
   const out: FinishedMatch[] = [];
   for (const m of res.matches) {
-    if (m.status !== "FINISHED") continue;
+    // AWARDED = résultat validé sur tapis (forfait, etc.) : score définitif,
+    // à scorer comme un match terminé (cohérent avec mapStatus côté ingestion).
+    if (m.status !== "FINISHED" && m.status !== "AWARDED") continue;
     const home = m.score?.fullTime?.home;
     const away = m.score?.fullTime?.away;
     if (typeof home !== "number" || typeof away !== "number") continue;

@@ -37,7 +37,17 @@ export function MatchRow({
         {TIME_FMT.format(new Date(match.kickoff_at))}
       </span>
 
-      <span className="flex-1 text-right font-medium">{match.home_team}</span>
+      <span className="flex flex-1 items-center justify-end gap-2 font-medium">
+        <span className="truncate">{match.home_team}</span>
+        {match.home_crest_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={match.home_crest_url}
+            alt=""
+            className="h-5 w-5 shrink-0 rounded-full object-contain ring-1 ring-white/15"
+          />
+        )}
+      </span>
 
       <span className="w-14 shrink-0 text-center font-bold tabular-nums">
         {isFinished && hasScore
@@ -45,7 +55,17 @@ export function MatchRow({
           : "–"}
       </span>
 
-      <span className="flex-1 font-medium">{match.away_team}</span>
+      <span className="flex flex-1 items-center gap-2 font-medium">
+        {match.away_crest_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={match.away_crest_url}
+            alt=""
+            className="h-5 w-5 shrink-0 rounded-full object-contain ring-1 ring-white/15"
+          />
+        )}
+        <span className="truncate">{match.away_team}</span>
+      </span>
 
       <span className="flex w-full justify-end text-right text-xs text-zinc-400 sm:w-auto sm:min-w-[8rem] sm:shrink-0">
         <BetCell

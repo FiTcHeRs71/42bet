@@ -1,7 +1,7 @@
 # Handoff / reprise de session — 42Bet
 
 > Doc de **reprise de travail** (notamment pour changer de machine). Mis à jour à
-> la fin d'une session. Dernière maj : **2026-06-05**.
+> la fin d'une session. Dernière maj : **2026-06-06**.
 >
 > Pour le setup d'une nouvelle machine (clone, `.env.local`, plugins/skills
 > Claude Code) → voir [`deploy.md`](./deploy.md) §1.
@@ -26,6 +26,40 @@ Dernières features mergées (toutes sur `main`, poussées) :
 
 Specs/plans correspondants dans `docs/superpowers/specs/` et `.../plans/`
 (marqués « ✅ LIVRÉ »).
+
+---
+
+## 1bis. Pipeline matchs — ✅ LIVRÉ (2026-06-06, branche `feat/match-pipeline`)
+
+**Le chaînon qui manquait** : il n'existait aucune ingestion des matchs. La table
+`matches` ne contenait que le seed de dev factice ; le cron `sync-results` ne
+fait que *scorer* des matchs déjà présents. On a donc construit l'ingestion réelle
+des fixtures Coupe du Monde 2026 + un outil de test du scoring.
+
+Spec : `docs/superpowers/specs/2026-06-06-match-pipeline-design.md` ·
+Plan : `docs/superpowers/plans/2026-06-06-match-pipeline.md` (8 tâches).
+
+Livré :
+- `src/lib/match-sync.ts` (pur, testé) — `parseMatchesForUpsert` + `mapStatus`
+  (inclut `AWARDED → finished`) + `formatStage`.
+- `src/lib/football-data.ts` — `fetchWorldCupMatches()` renvoie le type fixture
+  enrichi (`WorldCupMatchesResponse`).
+- Migrations `0009_upsert_matches.sql` (RPC upsert idempotent, statut `finished`
+  collant, scores jamais écrasés) + `0010_remove_dev_seed_matches.sql`.
+  **Appliquées en DB** (`supabase db push`) + types régénérés.
+- Route `GET /api/cron/sync-matches` (auth `CRON_SECRET`) + cron Vercel quotidien
+  (`0 4 * * *`) dans `vercel.json`.
+- `src/components/match-row.tsx` — écussons d'équipe (crests).
+- `scripts/simulate-score.ts` + `npm run simulate-score -- <fdId> <h> <a>` :
+  appelle le vrai RPC `score_match` pour tester l'attribution de points.
+
+**Validé end-to-end** : ingestion `upserted: 104`, crests affichés, seed retiré,
+auth 401 OK ; scoring testé sur 3 cas (exact=3, bon vainqueur=1, raté=0), total
+correct, **idempotence** OK (`scored: 0` au 2ᵉ passage). 86 tests verts.
+
+⚠️ **Note technique** : `scripts/simulate-score.ts` ajoute un workaround
+WebSocket (`ws` + `realtime.transport`) car `@supabase/supabase-js` lève sur
+**Node 20** sans WebSocket natif. Supprimable si passage à Node 22+.
 
 ---
 
@@ -100,7 +134,13 @@ archi thème = approche A (tokens `@theme` + classes glass, dark forcé via
 
 ## 4. Backlog post-UI (rappel)
 
-1. Régénérer `FT_API_SECRET` sur intra 42 (sécurité — partagé en clair) → `.env.local`.
-2. Déploiement Vercel (env vars + cron `sync-results`) ; réactiver PR + protection `main`.
-3. ~~Enrichir la home `/`~~ ✓ fait dans la refonte UI (hero + prochains matchs + top 3).
-4. Bonus restant : notifications / feed d'activité.
+1. **Feature B — pipeline coalitions** (spec séparé à écrire) : la table
+   `coalitions` est **vide** et `upsert-player` n'écrit pas de coalition → badges
+   /photos vides. À faire : fetch des coalitions depuis l'intra 42 (nom/couleur/
+   image) + assignation de la coalition du joueur au login.
+2. Régénérer `FT_API_SECRET` sur intra 42 (sécurité — partagé en clair) → `.env.local`.
+3. Déploiement Vercel (env vars + **2 crons** : `sync-results` */5, `sync-matches`
+   quotidien) ; réactiver PR + protection `main`.
+4. ~~Enrichir la home `/`~~ ✓ fait dans la refonte UI.
+5. ~~Ingestion des matchs CM + test scoring~~ ✓ fait (§1bis).
+6. Bonus restant : notifications / feed d'activité.
