@@ -17,8 +17,9 @@ describe("mapStatus", () => {
     expect(mapStatus("PAUSED")).toBe("live");
     expect(mapStatus("SUSPENDED")).toBe("live");
   });
-  it("mappe terminé", () => {
+  it("mappe terminé (FINISHED et AWARDED)", () => {
     expect(mapStatus("FINISHED")).toBe("finished");
+    expect(mapStatus("AWARDED")).toBe("finished");
   });
   it("mappe reporté", () => {
     expect(mapStatus("POSTPONED")).toBe("postponed");
@@ -39,6 +40,9 @@ describe("formatStage", () => {
     expect(formatStage("SEMI_FINALS", null)).toBe("Demi-finales");
     expect(formatStage("THIRD_PLACE", null)).toBe("Petite finale");
     expect(formatStage("FINAL", null)).toBe("Finale");
+  });
+  it("donne la priorité au groupe sur le stage", () => {
+    expect(formatStage("FINAL", "GROUP_A")).toBe("Groupe A");
   });
   it("renvoie null si stage inconnu sans groupe", () => {
     expect(formatStage(null, null)).toBeNull();

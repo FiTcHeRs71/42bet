@@ -46,6 +46,7 @@ export function mapStatus(apiStatus: string): MatchStatus {
     case "SUSPENDED":
       return "live";
     case "FINISHED":
+    case "AWARDED": // résultat validé sur tapis : match terminé, score valide
       return "finished";
     case "POSTPONED":
       return "postponed";
