@@ -27,14 +27,14 @@ export async function resolveUserId(ftId: number): Promise<string | null> {
 export async function listPlayers(): Promise<LeaderboardPlayer[]> {
   const { data, error } = await supabaseAdmin
     .from("users")
-    .select("id, login, avatar_url, total_points, coalition:coalitions(name, color, image_url)");
+    .select("id, login, avatar_url, total_points, coalition:coalitions(ft_id, name, color, image_url)");
 
   if (error) throw new Error(`listPlayers: ${error.message}`);
 
   return (data ?? []).map((row) => {
     const c = row.coalition as
-      | { name: string; color: string; image_url: string | null }
-      | { name: string; color: string; image_url: string | null }[]
+      | { ft_id: number; name: string; color: string; image_url: string | null }
+      | { ft_id: number; name: string; color: string; image_url: string | null }[]
       | null;
     return {
       id: row.id,

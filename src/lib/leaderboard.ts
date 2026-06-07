@@ -5,12 +5,21 @@
 // (rule #7). Les pronos ne servent qu'au comptage et au taux de réussite. Tri +
 // ex æquo + accuracy testés dans tests/leaderboard.test.ts.
 
+import { COALITION_CURSUS_PRIORITY } from "@/lib/coalitions";
+
+export type LeaderboardCoalition = {
+  ft_id: number;
+  name: string;
+  color: string;
+  image_url: string | null;
+};
+
 export type LeaderboardPlayer = {
   id: string;
   login: string;
   avatar_url: string | null;
   total_points: number;
-  coalition: { name: string; color: string; image_url: string | null } | null;
+  coalition: LeaderboardCoalition | null;
 };
 
 export type LeaderboardBet = {
@@ -22,7 +31,7 @@ export type LeaderboardEntry = {
   rank: number;
   login: string;
   avatarUrl: string | null;
-  coalition: { name: string; color: string; image_url: string | null } | null;
+  coalition: LeaderboardCoalition | null;
   points: number; // users.total_points (dénormalisé par score_match)
   bets: number; // nb total de pronos
   accuracy: number | null; // 0..1 ; null si aucun prono noté
@@ -82,7 +91,7 @@ export function buildLeaderboard(
 
 export type CoalitionStanding = {
   rank: number;
-  coalition: { name: string; color: string; image_url: string | null };
+  coalition: LeaderboardCoalition;
   totalPoints: number;
   players: number; // nb de parieurs actifs de la coalition
   average: number; // totalPoints / players (float, arrondi à l'affichage)
@@ -112,6 +121,10 @@ export function buildCoalitionLeaderboard(
     if (acc) {
       acc.totalPoints += e.points;
       acc.players += 1;
+      // Couleur/logo canoniques = coalition de cursus le plus prioritaire (21>9>1).
+      const cur = COALITION_CURSUS_PRIORITY[acc.coalition.ft_id] ?? 0;
+      const cand = COALITION_CURSUS_PRIORITY[e.coalition.ft_id] ?? 0;
+      if (cand > cur) acc.coalition = e.coalition;
     } else {
       byName.set(e.coalition.name, {
         coalition: e.coalition,

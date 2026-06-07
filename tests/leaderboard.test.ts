@@ -9,7 +9,7 @@ import {
   type LeaderboardPlayer,
 } from "../src/lib/leaderboard";
 
-const COA = { name: "The Federation", color: "#39c2c2", image_url: null };
+const COA = { ft_id: 192, name: "The Federation", color: "#39c2c2", image_url: null };
 
 function player(
   id: string,
@@ -104,9 +104,9 @@ describe("buildLeaderboard", () => {
   });
 });
 
-const FED = { name: "Federation", color: "#39c2c2", image_url: null };
-const ORDER = { name: "Order", color: "#9b59b6", image_url: null };
-const ALLI = { name: "Alliance", color: "#e67e22", image_url: null };
+const FED = { ft_id: 192, name: "Federation", color: "#39c2c2", image_url: null };
+const ORDER = { ft_id: 191, name: "Order", color: "#9b59b6", image_url: null };
+const ALLI = { ft_id: 168, name: "Alliance", color: "#e67e22", image_url: null };
 
 function entry(
   login: string,
@@ -175,5 +175,28 @@ describe("buildCoalitionLeaderboard", () => {
       "Alliance",
     ]);
     expect(r.map((c) => c.rank)).toEqual([1, 1, 3]);
+  });
+
+  test("fusionne les Houses homonymes et garde la couleur du cursus prioritaire", () => {
+    const houseC21 = { ft_id: 192, name: "House of Threads", color: "#599ac2", image_url: "c21" };
+    const houseC1 = { ft_id: 189, name: "House of Threads", color: "#528AAE", image_url: "c1" };
+    const entries = [
+      entry("alice", 4, houseC21),
+      entry("bob", 2, houseC1),
+    ];
+    const r = buildCoalitionLeaderboard(entries);
+    expect(r).toHaveLength(1);
+    expect(r[0].coalition.name).toBe("House of Threads");
+    expect(r[0].coalition.color).toBe("#599ac2"); // couleur c21 (priorité 3)
+    expect(r[0].coalition.image_url).toBe("c21");
+    expect(r[0].totalPoints).toBe(6);
+    expect(r[0].players).toBe(2);
+  });
+
+  test("couleur canonique indépendante de l'ordre des entrées", () => {
+    const houseC21 = { ft_id: 192, name: "House of Threads", color: "#599ac2", image_url: "c21" };
+    const houseC1 = { ft_id: 189, name: "House of Threads", color: "#528AAE", image_url: "c1" };
+    const r = buildCoalitionLeaderboard([entry("bob", 2, houseC1), entry("alice", 4, houseC21)]);
+    expect(r[0].coalition.color).toBe("#599ac2");
   });
 });
