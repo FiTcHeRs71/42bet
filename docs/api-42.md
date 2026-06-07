@@ -20,7 +20,7 @@
 | Nom | `42Bet` |
 | Scope | `public` |
 | Redirect URI (dev) | `http://localhost:3000/api/auth/callback/42` |
-| Campus | Lausanne (`FT_API_CAMPUS_ID=33`) |
+| Campus | Lausanne (`FT_API_CAMPUS_ID=47`) |
 
 Variables d'env (cf. [`.env.local.example`](../.env.local.example)) :
 `FT_API_UID`, `FT_API_SECRET`, `FT_API_CAMPUS_ID`.
@@ -83,7 +83,42 @@ Endpoint utilisé : `GET /v2/users/:id/coalitions` (récupère la coalition du
 joueur connecté ; sert aussi à remplir la table `coalitions`).
 
 Pas encore implémenté (YAGNI, backlog) : `fetch42Paginated`,
-`GET /v2/coalitions` (coalitions sans joueur), batch `/v2/campus/33/users`.
+`GET /v2/coalitions` (coalitions sans joueur), batch `/v2/campus/47/users`.
+
+## Coalitions de Lausanne (campus 47)
+
+> ⚠️ **`FT_API_CAMPUS_ID=47`** — `47` = **Lausanne** (Renens, Suisse). Ne pas
+> confondre avec `33` = **Bangkok** (Thaïlande). Le pipeline coalitions a longtemps
+> synchronisé le mauvais campus (`33`) ; c'était la cause racine des coalitions
+> erronées. La valeur correcte est **47**.
+
+Coalitions réelles du campus 47, vérifiées en direct via
+`GET /v2/blocs?filter[campus_id]=47` le **2026-06-07** :
+
+| `ft_id` | Nom | Couleur | Cursus | Priorité |
+|---|---|---|---|---|
+| 193 | House of Processes | `#70AF85` | 21 (42cursus actuel) | 3 |
+| 192 | House of Threads | `#599ac2` | 21 | 3 |
+| 191 | House of Cores | `#B23256` | 21 | 3 |
+| 168 | The Sharks | `#82CCE0` | 9 (Piscine) | 2 |
+| 167 | The Frogs | `#6c8946` | 9 | 2 |
+| 166 | The Penguins | `#EAB77F` | 9 | 2 |
+| 190 | House of Processes | `#70AF85` | 1 (42 legacy) | 1 |
+| 189 | House of Threads | `#528AAE` | 1 | 1 |
+| 188 | House of Cores | `#B23256` | 1 | 1 |
+
+> Les 3 « Houses » existent dans **deux cursus** : 21 (42cursus actuel) et 1 (42
+> legacy), avec des `ft_id` distincts et des couleurs légèrement différentes. Les
+> animaux de Piscine (Sharks/Frogs/Penguins) sont en cursus 9 uniquement. Donc
+> **9 lignes de coalition = 6 équipes logiques**.
+
+**Règle de sélection (multi-cursus).** Un étudiant peut appartenir à plusieurs
+coalitions (Piscine puis cursus). `pickUserCoalition` (`src/lib/coalitions.ts`)
+ne prend plus `raw[0]` (non déterministe) : il choisit par **priorité de cursus**
+via la map statique `COALITION_CURSUS_PRIORITY` (**21 > 9 > 1**), départage par
+`ft_id` croissant, et retombe sur la première coalition pour un `ft_id` inconnu.
+Concrètement : un étudiant ayant fait la Piscine puis le cursus est représenté par
+sa House de cursus 21 ; un piscineux actuel par son animal de Piscine.
 
 | Endpoint visé (backlog) | Usage prévu |
 |---|---|

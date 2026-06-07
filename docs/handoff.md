@@ -1,7 +1,7 @@
 # Handoff / reprise de session — 42Bet
 
 > Doc de **reprise de travail** (notamment pour changer de machine). Mis à jour à
-> la fin d'une session. Dernière maj : **2026-06-06**.
+> la fin d'une session. Dernière maj : **2026-06-07**.
 >
 > Pour le setup d'une nouvelle machine (clone, `.env.local`, plugins/skills
 > Claude Code) → voir [`deploy.md`](./deploy.md) §1.
@@ -33,6 +33,41 @@ Dernières features mergées (toutes sur `main`, poussées) :
 
 Specs/plans correspondants dans `docs/superpowers/specs/` et `.../plans/`
 (marqués « ✅ LIVRÉ »).
+
+---
+
+## 1ter. Pipeline coalitions — ✅ LIVRÉ (2026-06-07, branche `feat/coalitions-pipeline`)
+
+**Feature B du backlog (§4.1) close.** Les coalitions étaient synchronisées du
+mauvais campus et la sélection multi-cursus était non déterministe. 5 changements
+livrés et committés :
+
+1. **Fix campus 47** — `FT_API_CAMPUS_ID` passait de `33` (Bangkok, Thaïlande !)
+   à **`47`** (Lausanne, Renens). C'était la cause racine : les coalitions
+   venaient du mauvais campus.
+2. **Sélection déterministe** — `pickUserCoalition` (`src/lib/coalitions.ts`) ne
+   prend plus `raw[0]` mais choisit par priorité de cursus statique
+   `COALITION_CURSUS_PRIORITY` (**21 > 9 > 1**), départage par `ft_id` croissant,
+   fallback première coalition si `ft_id` inconnu. Un étudiant Piscine+cursus est
+   représenté par sa House de cursus 21 ; un piscineux actuel par son animal.
+3. **Classement individuel sur `users.total_points`** — le tri individuel lit le
+   `total_points` dénormalisé (maintenu par `score_match`) au lieu de re-sommer
+   `bets.points_awarded`. Les paris ne pilotent plus que le compte de pronostics
+   et la précision.
+4. **Classement coalition : merge par `name` + couleur canonique** —
+   `buildCoalitionLeaderboard` regroupe par `name` (les deux cursus d'une House
+   fusionnent en une équipe), couleur/logo = ceux de la priorité de cursus la plus
+   haute (cursus 21 gagne).
+5. **Seed dev avec coalitions réelles de Lausanne** + joueurs factices
+   multi-coalitions, pour tester la sélection déterministe et le merge.
+
+Les 9 coalitions réelles (campus 47, vérifiées via
+`GET /v2/blocs?filter[campus_id]=47` le 2026-06-07) = 6 équipes logiques sont
+documentées dans [`api-42.md`](./api-42.md) §« Coalitions de Lausanne ».
+
+> **Décision assumée** : `signIn` **reste bloquant** si l'upsert de la fiche
+> `users` échoue (pas de session sans ligne `users`), tandis que l'assignation de
+> coalition est **best-effort** (ne bloque jamais le login).
 
 ---
 
@@ -141,10 +176,9 @@ archi thème = approche A (tokens `@theme` + classes glass, dark forcé via
 
 ## 4. Backlog post-UI (rappel)
 
-1. **Feature B — pipeline coalitions** (spec séparé à écrire) : la table
-   `coalitions` est **vide** et `upsert-player` n'écrit pas de coalition → badges
-   /photos vides. À faire : fetch des coalitions depuis l'intra 42 (nom/couleur/
-   image) + assignation de la coalition du joueur au login.
+1. ~~**Feature B — pipeline coalitions**~~ ✓ fait (§1ter, branche
+   `feat/coalitions-pipeline`) : campus 47, sélection déterministe, classements
+   sur `total_points` + merge par `name`.
 2. Régénérer `FT_API_SECRET` sur intra 42 (sécurité — partagé en clair) → `.env.local`.
 3. Déploiement Vercel (env vars + **2 crons** : `sync-results` */5, `sync-matches`
    quotidien). ⚠️ Flux **PR réactivé dès maintenant** (binôme, cf. AGENTS §8) ;
