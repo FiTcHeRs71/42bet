@@ -49,6 +49,19 @@ function outcomeFromPoints(points: number | null): ProfileOutcome {
   return "miss";
 }
 
+export type OutcomeCounts = { exact: number; good: number; miss: number };
+
+/** Compte les issues par catégorie, en ignorant les pronos en attente. */
+export function countOutcomes(entries: ProfileHistoryEntry[]): OutcomeCounts {
+  const counts: OutcomeCounts = { exact: 0, good: 0, miss: 0 };
+  for (const e of entries) {
+    if (e.outcome === "exact") counts.exact += 1;
+    else if (e.outcome === "good") counts.good += 1;
+    else if (e.outcome === "miss") counts.miss += 1;
+  }
+  return counts;
+}
+
 /**
  * Transforme les pronos-avec-match en view models triés (kickoff décroissant,
  * départage par matchId). Ignore les lignes sans match (jointure nulle).

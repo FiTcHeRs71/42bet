@@ -1,6 +1,12 @@
 import { describe, test, expect } from "vitest";
 
-import { buildProfileHistory, type ProfileBetRow } from "../src/lib/profile";
+import {
+  buildProfileHistory,
+  countOutcomes,
+  type ProfileBetRow,
+  type ProfileHistoryEntry,
+  type ProfileOutcome,
+} from "../src/lib/profile";
 import type { MatchStatus } from "../src/lib/types";
 
 function makeRow(
@@ -99,5 +105,53 @@ describe("buildProfileHistory", () => {
     expect([m1.predictedHome, m1.predictedAway]).toEqual([2, 1]);
     expect([m2.actualHome, m2.actualAway]).toEqual([null, null]);
     expect([m2.predictedHome, m2.predictedAway]).toEqual([1, 1]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// countOutcomes
+// ---------------------------------------------------------------------------
+
+function entry(outcome: ProfileOutcome, matchId: string = outcome): ProfileHistoryEntry {
+  return {
+    matchId,
+    homeTeam: "H",
+    awayTeam: "A",
+    homeCrestUrl: null,
+    awayCrestUrl: null,
+    kickoffAt: "2026-06-14T18:00:00.000Z",
+    predictedHome: 1,
+    predictedAway: 0,
+    actualHome: null,
+    actualAway: null,
+    status: "scheduled",
+    pointsAwarded:
+      outcome === "exact" ? 3 : outcome === "good" ? 1 : outcome === "miss" ? 0 : null,
+    outcome,
+  };
+}
+
+describe("countOutcomes", () => {
+  test("compte exact/good/miss et ignore pending", () => {
+    const counts = countOutcomes([
+      entry("exact", "1"),
+      entry("exact", "2"),
+      entry("good", "3"),
+      entry("miss", "4"),
+      entry("pending", "5"),
+    ]);
+    expect(counts).toEqual({ exact: 2, good: 1, miss: 1 });
+  });
+
+  test("retourne des zéros sur un tableau vide", () => {
+    expect(countOutcomes([])).toEqual({ exact: 0, good: 0, miss: 0 });
+  });
+
+  test("retourne des zéros quand tout est pending", () => {
+    expect(countOutcomes([entry("pending", "1"), entry("pending", "2")])).toEqual({
+      exact: 0,
+      good: 0,
+      miss: 0,
+    });
   });
 });
