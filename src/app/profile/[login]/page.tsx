@@ -4,7 +4,13 @@ import { notFound } from "next/navigation";
 import { CoalitionBadge } from "@/components/coalition-badge";
 import { listAllBets, listBetsWithMatchByUser } from "@/lib/bets";
 import { buildLeaderboard } from "@/lib/leaderboard";
-import { buildProfileHistory, type ProfileOutcome } from "@/lib/profile";
+import {
+  buildProfileHistory,
+  countOutcomes,
+  partitionHistory,
+  type ProfileHistoryEntry,
+  type ProfileOutcome,
+} from "@/lib/profile";
 import { listPlayers } from "@/lib/users";
 
 // Les points + rang évoluent après chaque match : rendu jamais figé.
@@ -14,6 +20,8 @@ const PCT_FMT = new Intl.NumberFormat("fr-FR", {
   style: "percent",
   maximumFractionDigits: 0,
 });
+
+const DATE_FMT = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
 
 const OUTCOME: Record<ProfileOutcome, { label: string; cls: string }> = {
   exact: { label: "Score exact", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" },
@@ -36,6 +44,8 @@ export default async function ProfilePage({
   const entry =
     buildLeaderboard(players, allBets).find((e) => e.login === login) ?? null;
   const history = buildProfileHistory(await listBetsWithMatchByUser(player.id));
+  const counts = countOutcomes(history);
+  const { pending, played } = partitionHistory(history);
 
   return (
     <main className="rise mx-auto w-full max-w-2xl flex-1 p-6">
@@ -76,41 +86,45 @@ export default async function ProfilePage({
         <Stat label="Pronos" value={entry ? `${entry.bets}` : "0"} />
       </dl>
 
+      {/* Chips de ventilation */}
+      {history.length > 0 && (
+        <div className="mb-8 flex gap-3">
+          <OutcomeChip n={counts.exact} label="scores exacts" cls={OUTCOME.exact.cls} />
+          <OutcomeChip n={counts.good} label="bons résultats" cls={OUTCOME.good.cls} />
+          <OutcomeChip n={counts.miss} label="ratés" cls={OUTCOME.miss.cls} />
+        </div>
+      )}
+
       {/* Timeline */}
-      <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-400">
-        Historique
-      </h2>
       {history.length === 0 ? (
         <p className="text-zinc-400">Aucun pronostic pour l&apos;instant.</p>
       ) : (
-        <ul className="space-y-2">
-          {history.map((h) => {
-            const o = OUTCOME[h.outcome];
-            const finished = h.actualHome !== null && h.actualAway !== null;
-            return (
-              <li
-                key={h.matchId}
-                className="glass flex items-center gap-3 px-4 py-3 text-sm"
-              >
-                <span className="flex-1 truncate">
-                  {h.homeTeam} <span className="text-zinc-500">vs</span>{" "}
-                  {h.awayTeam}
-                </span>
-                <span className="shrink-0 tabular-nums text-zinc-400">
-                  prono {h.predictedHome}–{h.predictedAway}
-                </span>
-                <span className="w-14 shrink-0 text-right font-medium tabular-nums">
-                  {finished ? `${h.actualHome}–${h.actualAway}` : "—"}
-                </span>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${o.cls}`}
-                >
-                  {o.label}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+        <>
+          {pending.length > 0 && (
+            <section className="mb-6">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-400">
+                En attente
+              </h2>
+              <ul className="space-y-2">
+                {pending.map((h) => (
+                  <HistoryRow key={h.matchId} entry={h} />
+                ))}
+              </ul>
+            </section>
+          )}
+          {played.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-400">
+                Joués
+              </h2>
+              <ul className="space-y-2">
+                {played.map((h) => (
+                  <HistoryRow key={h.matchId} entry={h} />
+                ))}
+              </ul>
+            </section>
+          )}
+        </>
       )}
     </main>
   );
@@ -123,6 +137,53 @@ function Stat({ label, value }: { label: string; value: string }) {
         {label}
       </dt>
       <dd className="mt-1 text-lg font-semibold tabular-nums">{value}</dd>
+    </div>
+  );
+}
+
+function Crest({ url }: { url: string | null }) {
+  if (!url) {
+    return <span className="h-5 w-5 shrink-0 rounded bg-white/10" />;
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={url} alt="" className="h-5 w-5 shrink-0 rounded object-contain" />
+  );
+}
+
+function HistoryRow({ entry }: { entry: ProfileHistoryEntry }) {
+  const o = OUTCOME[entry.outcome];
+  const finished = entry.actualHome !== null && entry.actualAway !== null;
+  return (
+    <li className="glass flex items-center gap-3 px-4 py-3 text-sm">
+      <Crest url={entry.homeCrestUrl} />
+      <span className="flex-1 truncate">
+        {entry.homeTeam} <span className="text-zinc-500">vs</span> {entry.awayTeam}
+      </span>
+      <Crest url={entry.awayCrestUrl} />
+      <span className="shrink-0 text-zinc-400">
+        {DATE_FMT.format(new Date(entry.kickoffAt))}
+      </span>
+      <span className="shrink-0 tabular-nums text-zinc-400">
+        prono {entry.predictedHome}–{entry.predictedAway}
+      </span>
+      <span className="w-12 shrink-0 text-right font-medium tabular-nums">
+        {finished ? `${entry.actualHome}–${entry.actualAway}` : "—"}
+      </span>
+      <span
+        className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${o.cls}`}
+      >
+        {o.label}
+      </span>
+    </li>
+  );
+}
+
+function OutcomeChip({ n, label, cls }: { n: number; label: string; cls: string }) {
+  return (
+    <div className={`flex-1 rounded-xl px-3 py-2 text-center text-sm ${cls}`}>
+      <span className="block text-lg font-bold tabular-nums">{n}</span>
+      {label}
     </div>
   );
 }
