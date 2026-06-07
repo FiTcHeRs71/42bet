@@ -33,9 +33,18 @@ from (values
 left join public.coalitions c on c.ft_id = v.coa_ft_id
 on conflict (ft_id) do nothing;
 
--- 3. Bets fictifs notés, accrochés au premier match disponible.
+-- 3. Match de test TERMINÉ pour accrocher les bets. Nécessaire car la migration
+--    0010 vide les matchs de dev : sans ce match, le bloc bets serait un no-op et
+--    le classement resterait vide. football_data_id 999001 = plage de test dédiée.
+insert into public.matches
+  (football_data_id, home_team, away_team, stage, kickoff_at, status, home_score, away_score)
+values
+  (999001, 'Test FC', 'Seed United', 'group', now() - interval '1 day', 'finished', 2, 1)
+on conflict (football_data_id) do nothing;
+
+-- 4. Bets fictifs notés, accrochés au match de test ci-dessus.
 --    Chaque joueur a 2 pronos ; points_awarded varié pour exercer accuracy.
-with m as (select id from public.matches order by kickoff_at limit 1)
+with m as (select id from public.matches where football_data_id = 999001)
 insert into public.bets (user_id, match_id, home_score, away_score, points_awarded)
 select u.id, m.id, b.home, b.away, b.pts
 from m
