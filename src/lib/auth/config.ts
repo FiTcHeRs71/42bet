@@ -9,7 +9,7 @@ import NextAuth from "next-auth";
 import FortyTwo from "next-auth/providers/42-school";
 
 import { fetch42 } from "@/lib/api-42";
-import { mapFt42Profile, type Ft42Me } from "@/lib/auth/profile";
+import { mapFt42Profile, getPrimaryCampusId, type Ft42Me } from "@/lib/auth/profile";
 import { upsertPlayer, type UpsertDeps } from "@/lib/auth/upsert-player";
 import type { Ft42Coalition } from "@/lib/coalitions";
 import { requireEnv } from "@/lib/env";
@@ -68,7 +68,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ profile }) {
       if (!profile) return false;
-      await upsertPlayer(mapFt42Profile(profile as unknown as Ft42Me), upsertDeps);
+      const raw = profile as unknown as Ft42Me;
+      // Alpha : accès réservé au campus 42 Lausanne (47). Filtre AVANT l'upsert
+      // pour ne pas créer de fiche joueur hors campus.
+      if (getPrimaryCampusId(raw) !== Number(requireEnv("FT_API_CAMPUS_ID"))) {
+        return false;
+      }
+      await upsertPlayer(mapFt42Profile(raw), upsertDeps);
       return true;
     },
     async jwt({ token, profile }) {
