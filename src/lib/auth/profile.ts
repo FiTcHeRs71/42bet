@@ -7,6 +7,7 @@ export interface Ft42Me {
   id: number;
   login: string;
   image?: { link?: string | null } | null;
+  campus_users?: Array<{ campus_id: number; is_primary: boolean }>;
 }
 
 /** Profil joueur normalisé (ce que l'app stocke et expose). */
@@ -22,4 +23,12 @@ export function mapFt42Profile(raw: Ft42Me): PlayerProfile {
     login: raw.login,
     avatarUrl: raw.image?.link ?? null,
   };
+}
+
+/** Campus principal du compte 42 (is_primary), sinon le premier listé, sinon null. */
+export function getPrimaryCampusId(raw: Ft42Me): number | null {
+  const list = raw.campus_users ?? [];
+  if (list.length === 0) return null;
+  const primary = list.find((c) => c.is_primary);
+  return (primary ?? list[0]).campus_id;
 }
