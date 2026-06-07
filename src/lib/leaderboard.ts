@@ -1,13 +1,15 @@
 // src/lib/leaderboard.ts
 // Construction du classement général — logique PURE (aucune I/O, aucun temps).
-// Agrège les pronos notés par le cron (points_awarded) sans JAMAIS recalculer de
-// points (rule #7) : on additionne des valeurs déjà attribuées. Tri + ex æquo +
-// taux de réussite testés dans tests/leaderboard.test.ts.
+// Les points proviennent de users.total_points (colonne dénormalisée maintenue
+// atomiquement par la fonction Postgres score_match) — aucun recalcul de points
+// (rule #7). Les pronos ne servent qu'au comptage et au taux de réussite. Tri +
+// ex æquo + accuracy testés dans tests/leaderboard.test.ts.
 
 export type LeaderboardPlayer = {
   id: string;
   login: string;
   avatar_url: string | null;
+  total_points: number;
   coalition: { name: string; color: string; image_url: string | null } | null;
 };
 
@@ -21,7 +23,7 @@ export type LeaderboardEntry = {
   login: string;
   avatarUrl: string | null;
   coalition: { name: string; color: string; image_url: string | null } | null;
-  points: number; // somme des points_awarded (null compté 0)
+  points: number; // users.total_points (dénormalisé par score_match)
   bets: number; // nb total de pronos
   accuracy: number | null; // 0..1 ; null si aucun prono noté
 };
@@ -43,12 +45,10 @@ export function buildLeaderboard(
     .filter((p) => betsByUser.has(p.id))
     .map((p) => {
       const userBets = betsByUser.get(p.id)!;
-      let points = 0;
       let scored = 0;
       let wins = 0;
       for (const b of userBets) {
         if (b.points_awarded !== null) {
-          points += b.points_awarded;
           scored += 1;
           if (b.points_awarded > 0) wins += 1;
         }
@@ -57,7 +57,7 @@ export function buildLeaderboard(
         login: p.login,
         avatarUrl: p.avatar_url,
         coalition: p.coalition,
-        points,
+        points: p.total_points, // source de vérité dénormalisée (score_match)
         bets: userBets.length,
         accuracy: scored > 0 ? wins / scored : null,
       };
