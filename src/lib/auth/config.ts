@@ -16,6 +16,13 @@ import { requireEnv } from "@/lib/env";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import "@/lib/auth/types";
 
+// Campus autorisé pour l'alpha (Lausanne = 47). Lu au chargement : une mauvaise
+// config échoue au démarrage plutôt qu'à la première tentative de login.
+const ALPHA_CAMPUS_ID = Number(requireEnv("FT_API_CAMPUS_ID"));
+if (!Number.isInteger(ALPHA_CAMPUS_ID) || ALPHA_CAMPUS_ID <= 0) {
+  throw new Error("FT_API_CAMPUS_ID doit être un entier positif");
+}
+
 const upsertDeps: UpsertDeps = {
   async upsertUser(row) {
     const { error } = await supabaseAdmin
@@ -71,7 +78,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const raw = profile as unknown as Ft42Me;
       // Alpha : accès réservé au campus 42 Lausanne (47). Filtre AVANT l'upsert
       // pour ne pas créer de fiche joueur hors campus.
-      if (getPrimaryCampusId(raw) !== Number(requireEnv("FT_API_CAMPUS_ID"))) {
+      if (getPrimaryCampusId(raw) !== ALPHA_CAMPUS_ID) {
         return false;
       }
       await upsertPlayer(mapFt42Profile(raw), upsertDeps);

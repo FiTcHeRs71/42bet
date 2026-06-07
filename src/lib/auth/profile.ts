@@ -25,7 +25,12 @@ export function mapFt42Profile(raw: Ft42Me): PlayerProfile {
   };
 }
 
-/** Campus principal du compte 42 (is_primary), sinon le premier listé, sinon null. */
+/**
+ * Campus principal du compte 42 (`is_primary`), sinon le premier listé, sinon null.
+ * Le fallback sur le premier campus ne laisse passer le gate que si ce campus est
+ * lui-même autorisé : un compte sans `is_primary` mais réellement rattaché à
+ * Lausanne (47 en tête de liste) reste admis ; les autres sont rejetés.
+ */
 export function getPrimaryCampusId(raw: Ft42Me): number | null {
   const list = raw.campus_users ?? [];
   if (list.length === 0) return null;

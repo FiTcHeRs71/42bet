@@ -38,10 +38,10 @@ describe("getPrimaryCampusId", () => {
         login: "alice",
         campus_users: [
           { campus_id: 33, is_primary: false },
-          { campus_id: 47, is_primary: true },
+          { campus_id: 47, is_primary: true }, // 47 = campus Lausanne
         ],
       }),
-    ).toBe(47);
+    ).toBe(47); // 47 = campus Lausanne
   });
 
   it("retombe sur le premier campus si aucun is_primary", () => {
