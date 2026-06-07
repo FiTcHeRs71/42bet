@@ -19,6 +19,7 @@ Quelqu'un qui rejoint le projet lit, dans l'ordre :
 - `football-data.md` — API foot, crons ingestion + scoring ✅
 - `database-schema.md` — tables, relations, RLS ✅
 - `deploy.md` — setup nouvelle machine + procédure de déploiement Vercel ✅
+- `alpha-amicaux.md` — runbook matchs amicaux (insertion SQL + simulate-score) ✅
 - `handoff.md` — état courant du projet / reprise de session ✅
 
 ## docs/ vs skills/
