@@ -1,8 +1,9 @@
-import { describe, test, expect } from "vitest";
+import { describe, it, test, expect } from "vitest";
 
 import {
   buildProfileHistory,
   countOutcomes,
+  partitionHistory,
   type ProfileBetRow,
   type ProfileHistoryEntry,
   type ProfileOutcome,
@@ -153,5 +154,39 @@ describe("countOutcomes", () => {
       good: 0,
       miss: 0,
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// partitionHistory
+// ---------------------------------------------------------------------------
+
+describe("partitionHistory", () => {
+  it("sépare pending et played", () => {
+    const { pending, played } = partitionHistory([
+      entry("pending", "1"),
+      entry("exact", "2"),
+      entry("miss", "3"),
+    ]);
+    expect(pending.map((e) => e.matchId)).toEqual(["1"]);
+    expect(played.map((e) => e.matchId)).toEqual(["2", "3"]);
+  });
+
+  it("préserve l'ordre d'entrée dans chaque groupe", () => {
+    const { played } = partitionHistory([
+      entry("exact", "a"),
+      entry("good", "b"),
+      entry("miss", "c"),
+    ]);
+    expect(played.map((e) => e.matchId)).toEqual(["a", "b", "c"]);
+  });
+
+  it("retourne deux tableaux vides sur entrée vide", () => {
+    expect(partitionHistory([])).toEqual({ pending: [], played: [] });
+  });
+
+  it("gère le cas tout-pending et tout-played", () => {
+    expect(partitionHistory([entry("pending", "1")]).played).toEqual([]);
+    expect(partitionHistory([entry("exact", "1")]).pending).toEqual([]);
   });
 });
