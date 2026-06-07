@@ -106,7 +106,7 @@ sources et de la portée :
 | `AUTH_SECRET` | server | `openssl rand -base64 32` |
 | `AUTH_URL` | server | `http://localhost:3000` en dev ; URL de prod en prod |
 | `FT_API_UID` / `FT_API_SECRET` | server | App OAuth sur https://profile.intra.42.fr/oauth/applications |
-| `FT_API_CAMPUS_ID` | server | `33` (Lausanne) |
+| `FT_API_CAMPUS_ID` | server | `47` (Lausanne — Renens). 33 = Bangkok, ne pas confondre. |
 | `FOOTBALL_DATA_API_KEY` | server | https://www.football-data.org/client/register |
 | `NEXT_PUBLIC_SUPABASE_URL` | **client** | Supabase → Project Settings → API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **client** | Supabase → clé *publishable* (`sb_publishable_…`) |
