@@ -5,7 +5,7 @@
 // (rule #7). Les pronos ne servent qu'au comptage et au taux de réussite. Tri +
 // ex æquo + accuracy testés dans tests/leaderboard.test.ts.
 
-import { COALITION_CURSUS_PRIORITY } from "@/lib/coalitions";
+import { COALITION_CURSUS_PRIORITY, coalitionGroupOf, type CoalitionGroup } from "@/lib/coalitions";
 
 export type LeaderboardCoalition = {
   ft_id: number;
@@ -162,6 +162,62 @@ export function buildCoalitionLeaderboard(
   );
 
   // 4. Rang standard (1,1,3) sur la moyenne : même rang à moyenne égale.
+  let lastAvg: number | null = null;
+  let lastRank = 0;
+  return aggregated.map((entry, index) => {
+    const rank =
+      lastAvg !== null && entry.average === lastAvg ? lastRank : index + 1;
+    lastAvg = entry.average;
+    lastRank = rank;
+    return { rank, ...entry };
+  });
+}
+
+export type CampStanding = {
+  rank: number;
+  camp: CoalitionGroup;
+  label: string; // "Students" | "Piscineux"
+  totalPoints: number;
+  players: number; // parieurs actifs du camp
+  average: number; // totalPoints / players
+};
+
+const CAMP_LABEL: Record<CoalitionGroup, string> = {
+  cursus: "Students",
+  piscine: "Piscineux",
+};
+
+/**
+ * Classement des 2 camps (Students vs Piscineux) à la moyenne de points par
+ * parieur actif. Agrège la sortie de buildLeaderboard ; exclut les joueurs sans
+ * coalition. Aucun recalcul de points (rule #7).
+ */
+export function buildCampStandings(entries: LeaderboardEntry[]): CampStanding[] {
+  const byCamp = new Map<CoalitionGroup, { totalPoints: number; players: number }>();
+  for (const e of entries) {
+    if (e.coalition === null) continue;
+    const camp = coalitionGroupOf(e.coalition.ft_id);
+    const acc = byCamp.get(camp);
+    if (acc) {
+      acc.totalPoints += e.points;
+      acc.players += 1;
+    } else {
+      byCamp.set(camp, { totalPoints: e.points, players: 1 });
+    }
+  }
+
+  const aggregated = [...byCamp.entries()].map(([camp, a]) => ({
+    camp,
+    label: CAMP_LABEL[camp],
+    totalPoints: a.totalPoints,
+    players: a.players,
+    average: a.totalPoints / a.players,
+  }));
+
+  aggregated.sort(
+    (a, b) => b.average - a.average || b.totalPoints - a.totalPoints,
+  );
+
   let lastAvg: number | null = null;
   let lastRank = 0;
   return aggregated.map((entry, index) => {

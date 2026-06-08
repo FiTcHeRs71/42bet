@@ -241,3 +241,38 @@ describe("assignRanks", () => {
     expect(r.map((e) => e.rank)).toEqual([1, 1, 3]);
   });
 });
+
+describe("buildCampStandings", () => {
+  const cursusCoa = { ft_id: 192, name: "House of Threads", color: "#599ac2", image_url: null };
+  const piscineCoa = { ft_id: 167, name: "The Frogs", color: "#6c8946", image_url: null };
+
+  function e(points: number, coalition: LeaderboardEntry["coalition"]): LeaderboardEntry {
+    return { rank: 0, login: "x", avatarUrl: null, coalition, points, bets: 1, accuracy: null };
+  }
+
+  test("classe à la moyenne : petit camp peut devancer un grand", () => {
+    const r: CampStanding[] = buildCampStandings([
+      e(10, cursusCoa), e(10, cursusCoa), e(2, cursusCoa), // students moy = 22/3 ≈ 7.33
+      e(9, piscineCoa), e(9, piscineCoa),                  // piscineux moy = 9
+    ]);
+    expect(r.map((c) => c.label)).toEqual(["Piscineux", "Students"]);
+    expect(r.map((c) => c.rank)).toEqual([1, 2]);
+    expect(r[0]).toMatchObject({ camp: "piscine", players: 2, totalPoints: 18, average: 9 });
+  });
+
+  test("exclut les joueurs sans coalition", () => {
+    const r = buildCampStandings([e(5, cursusCoa), e(99, null)]);
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ camp: "cursus", players: 1, totalPoints: 5 });
+  });
+
+  test("un seul camp présent -> length 1", () => {
+    const r = buildCampStandings([e(3, piscineCoa)]);
+    expect(r).toHaveLength(1);
+    expect(r[0].label).toBe("Piscineux");
+  });
+
+  test("aucune entry -> []", () => {
+    expect(buildCampStandings([])).toEqual([]);
+  });
+});
