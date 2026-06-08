@@ -1,7 +1,7 @@
 # Handoff / reprise de session — 42Bet
 
 > Doc de **reprise de travail** (notamment pour changer de machine). Mis à jour à
-> la fin d'une session. Dernière maj : **2026-06-07**.
+> la fin d'une session. Dernière maj : **2026-06-08**.
 >
 > Pour le setup d'une nouvelle machine (clone, `.env.local`, plugins/skills
 > Claude Code) → voir [`deploy.md`](./deploy.md) §1.
@@ -68,6 +68,41 @@ documentées dans [`api-42.md`](./api-42.md) §« Coalitions de Lausanne ».
 > **Décision assumée** : `signIn` **reste bloquant** si l'upsert de la fiche
 > `users` échoue (pas de session sans ligne `users`), tandis que l'assignation de
 > coalition est **best-effort** (ne bloque jamais le login).
+
+---
+
+## 1quater. Alpha — ✅ CODE LIVRÉ (2026-06-08, branche `feat/alpha-launch`, PR #5)
+
+Objectif : mettre 42Bet en ligne sur **Vercel** pour une **alpha ouverte au campus
+42 Lausanne (47)**, et tester le flow complet (login → pari → scoring → classement)
+sur les **matchs amicaux** qui précèdent la Coupe du Monde.
+
+Spec : `docs/superpowers/specs/2026-06-08-alpha-launch-design.md` ·
+Plan : `docs/superpowers/plans/2026-06-08-alpha-launch.md` (6 tâches).
+
+Livré (seul chantier de code = le gating) :
+- **Login réservé au campus 47** — `getPrimaryCampusId` (`src/lib/auth/profile.ts`,
+  pur) lit le campus principal (`is_primary`, sinon premier, sinon `null`). Le
+  callback `signIn` (`src/lib/auth/config.ts`) refuse (`return false`) tout compte
+  dont le campus principal ≠ `ALPHA_CAMPUS_ID`, **avant** l'upsert (pas de fiche
+  joueur hors campus).
+- `ALPHA_CAMPUS_ID = Number(requireEnv("FT_API_CAMPUS_ID"))` hoisté au chargement
+  du module + garde entier (mauvaise config = crash au démarrage, pas au login).
+- Fix doc `deploy.md` : `FT_API_CAMPUS_ID = 47` (et non 33 = Bangkok).
+- Runbooks : `deploy.md` §4 (premier déploiement Vercel) et nouveau
+  `docs/alpha-amicaux.md` (insertion SQL d'un amical + `simulate-score`).
+
+Décisions de cadrage : accès = **tout le campus 47** (pas de whitelist/invite) ;
+amicaux gérés **à la main** (SQL + `simulate-score` pointé sur la prod), pas
+d'extension du sync football-data ; cron World Cup laissé en place (tourne dans le
+vide jusqu'à la CM, inoffensif).
+
+Gates verts : **120 tests**, typecheck, lint, build.
+
+> **Reste à faire (manuel, hors PR, après merge)** : créer le projet Vercel,
+> coller les secrets en prod, ajouter la redirect URI OAuth `/api/auth/callback/42`
+> sur l'intra 42, smoke test (compte 47 accepté / hors-47 refusé, cron → `401`).
+> Voir `deploy.md` §4.
 
 ---
 
