@@ -1,0 +1,34 @@
+name: cron-sync-results
+
+# Déclenche le scoring 42Bet toutes les 5 min.
+# Le plan Vercel Hobby ne permet que des crons quotidiens : on externalise
+# donc ce tick fréquent ici. L'endpoint reste protégé par CRON_SECRET
+# (cf. src/app/api/cron/sync-results/route.ts — header Authorization: Bearer).
+#
+# Secrets repo requis (Settings → Secrets and variables → Actions) :
+#   PROD_URL     ex. https://42bet.vercel.app  (sans slash final)
+#   CRON_SECRET  même valeur que la var d'env Vercel Production
+#
+# Note : le scheduler GitHub Actions n'est pas garanti à la minute près
+# (best-effort, parfois quelques minutes de retard). Suffisant pour l'alpha.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {} # permet un déclenchement manuel depuis l'onglet Actions
+
+concurrency:
+  group: cron-sync-results
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger sync-results
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.PROD_URL }}/api/cron/sync-results")
+          echo "HTTP $code"
+          test "$code" = "200"
