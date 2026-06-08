@@ -1,6 +1,13 @@
-import { describe, test, expect } from "vitest";
+import { describe, it, test, expect } from "vitest";
 
-import { buildProfileHistory, type ProfileBetRow } from "../src/lib/profile";
+import {
+  buildProfileHistory,
+  countOutcomes,
+  partitionHistory,
+  type ProfileBetRow,
+  type ProfileHistoryEntry,
+  type ProfileOutcome,
+} from "../src/lib/profile";
 import type { MatchStatus } from "../src/lib/types";
 
 function makeRow(
@@ -99,5 +106,87 @@ describe("buildProfileHistory", () => {
     expect([m1.predictedHome, m1.predictedAway]).toEqual([2, 1]);
     expect([m2.actualHome, m2.actualAway]).toEqual([null, null]);
     expect([m2.predictedHome, m2.predictedAway]).toEqual([1, 1]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// countOutcomes
+// ---------------------------------------------------------------------------
+
+function entry(outcome: ProfileOutcome, matchId: string = outcome): ProfileHistoryEntry {
+  return {
+    matchId,
+    homeTeam: "H",
+    awayTeam: "A",
+    homeCrestUrl: null,
+    awayCrestUrl: null,
+    kickoffAt: "2026-06-14T18:00:00.000Z",
+    predictedHome: 1,
+    predictedAway: 0,
+    actualHome: null,
+    actualAway: null,
+    status: "scheduled",
+    pointsAwarded:
+      outcome === "exact" ? 3 : outcome === "good" ? 1 : outcome === "miss" ? 0 : null,
+    outcome,
+  };
+}
+
+describe("countOutcomes", () => {
+  test("compte exact/good/miss et ignore pending", () => {
+    const counts = countOutcomes([
+      entry("exact", "1"),
+      entry("exact", "2"),
+      entry("good", "3"),
+      entry("miss", "4"),
+      entry("pending", "5"),
+    ]);
+    expect(counts).toEqual({ exact: 2, good: 1, miss: 1 });
+  });
+
+  test("retourne des zéros sur un tableau vide", () => {
+    expect(countOutcomes([])).toEqual({ exact: 0, good: 0, miss: 0 });
+  });
+
+  test("retourne des zéros quand tout est pending", () => {
+    expect(countOutcomes([entry("pending", "1"), entry("pending", "2")])).toEqual({
+      exact: 0,
+      good: 0,
+      miss: 0,
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// partitionHistory
+// ---------------------------------------------------------------------------
+
+describe("partitionHistory", () => {
+  it("sépare pending et played", () => {
+    const { pending, played } = partitionHistory([
+      entry("pending", "1"),
+      entry("exact", "2"),
+      entry("miss", "3"),
+    ]);
+    expect(pending.map((e) => e.matchId)).toEqual(["1"]);
+    expect(played.map((e) => e.matchId)).toEqual(["2", "3"]);
+  });
+
+  it("préserve l'ordre d'entrée dans chaque groupe", () => {
+    const { played } = partitionHistory([
+      entry("exact", "a"),
+      entry("good", "b"),
+      entry("miss", "c"),
+    ]);
+    expect(played.map((e) => e.matchId)).toEqual(["a", "b", "c"]);
+  });
+
+  it("retourne deux tableaux vides sur entrée vide", () => {
+    expect(partitionHistory([])).toEqual({ pending: [], played: [] });
+  });
+
+  it("gère le cas tout-pending et tout-played", () => {
+    expect(partitionHistory([entry("pending", "1")]).played).toEqual([]);
+    expect(partitionHistory([entry("exact", "1")]).pending).toEqual([]);
   });
 });

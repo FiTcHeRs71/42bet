@@ -106,7 +106,7 @@ sources et de la portée :
 | `AUTH_SECRET` | server | `openssl rand -base64 32` |
 | `AUTH_URL` | server | `http://localhost:3000` en dev ; URL de prod en prod |
 | `FT_API_UID` / `FT_API_SECRET` | server | App OAuth sur https://profile.intra.42.fr/oauth/applications |
-| `FT_API_CAMPUS_ID` | server | `33` (Lausanne) |
+| `FT_API_CAMPUS_ID` | server | `47` (Lausanne — Renens). 33 = Bangkok, ne pas confondre. |
 | `FOOTBALL_DATA_API_KEY` | server | https://www.football-data.org/client/register |
 | `NEXT_PUBLIC_SUPABASE_URL` | **client** | Supabase → Project Settings → API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **client** | Supabase → clé *publishable* (`sb_publishable_…`) |
@@ -174,6 +174,47 @@ Le cron est déjà déclaré dans [`../vercel.json`](../vercel.json) :
 - [ ] Surveiller les logs du premier tick de cron `sync-results`.
 - [ ] Repasser au workflow **PR + protection de `main`** (AGENTS §8 : assoupli
       tant que non déployé, à réactiver au déploiement).
+
+---
+
+---
+
+## 4. Premier déploiement Vercel (alpha)
+
+Prod = branche `main`. Toute modif passe par PR mergée avant de partir en prod.
+
+### 4.1 Projet Vercel
+1. Importer le repo `FiTcHeRs71/42bet` dans Vercel (framework détecté : Next.js).
+2. Production Branch = `main`.
+
+### 4.2 Variables d'environnement (scope **Production**)
+Reprendre toutes les clés de `.env.local.example` :
+
+| Variable | Valeur |
+|---|---|
+| `AUTH_SECRET` | `openssl rand -base64 32` (nouvelle valeur prod) |
+| `AUTH_URL` | URL de prod, ex. `https://42bet.vercel.app` |
+| `FT_API_UID` / `FT_API_SECRET` | App OAuth intra 42 |
+| `FT_API_CAMPUS_ID` | `47` |
+| `FOOTBALL_DATA_API_KEY` | clé football-data.org |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase prod |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | clé publishable Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | clé secret Supabase (server-only) |
+| `CRON_SECRET` | `openssl rand -base64 32` |
+
+### 4.3 OAuth intra 42
+Sur https://profile.intra.42.fr/oauth/applications, ajouter la redirect URI :
+`https://<prod>/api/auth/callback/42` (garder aussi celle de localhost pour le dev).
+
+### 4.4 Cron Vercel
+`vercel.json` déclare déjà les crons. Vercel envoie `Authorization: Bearer <CRON_SECRET>`.
+Rien à configurer côté Vercel hormis la variable `CRON_SECRET`.
+
+### 4.5 Smoke test post-déploiement
+- Login OAuth avec un compte campus 47 → accès accordé.
+- Login avec un compte hors-47 → accès refusé (retour à la page de login).
+- `/leaderboard` s'affiche.
+- `curl -s -o /dev/null -w "%{http_code}" https://<prod>/api/cron/sync-results` → `401`.
 
 ---
 

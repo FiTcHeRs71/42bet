@@ -25,15 +25,33 @@
 ## Tables
 
 ### `coalitions`
-Référentiel des coalitions 42 (synchro API 42). `ft_id` UNIQUE = clé naturelle.
-Lecture publique. Colonnes : `id`, `ft_id`, `name`, `color` (hex), `image_url`,
-timestamps.
+Référentiel des coalitions 42 (synchro API 42, campus 47 = Lausanne). `ft_id`
+UNIQUE = clé naturelle. Lecture publique. Colonnes : `id`, `ft_id`, `name`,
+`color` (hex), `image_url`, timestamps.
+
+> **Classement par coalition (merge par `name`).** Une même House existe en deux
+> cursus (21 actuel et 1 legacy), donc deux lignes `coalitions` portant le même
+> `name`. `buildCoalitionLeaderboard` (`src/lib/leaderboard.ts`) **regroupe par
+> `name`** pour fusionner ces variantes en une seule équipe ; la couleur et le
+> logo affichés sont **canoniquement ceux de la priorité de cursus la plus haute**
+> (cursus 21 l'emporte, cf. `COALITION_CURSUS_PRIORITY` dans `src/lib/coalitions.ts`).
 
 ### `users`
 Profil joueur + `total_points` dénormalisé (perf classement). Keyé par l'intra 42
 (`ft_id`, `login` UNIQUE). **Pas** de FK vers `auth.users`. `coalition_id` →
 `coalitions(id)` `ON DELETE SET NULL`. Lecture publique (classement). Index :
 `total_points DESC`, `coalition_id`.
+
+> **`total_points` = source du classement individuel.** Le classement individuel
+> trie directement sur `users.total_points` (dénormalisé, maintenu atomiquement
+> par la fonction Postgres `score_match`), **et non** sur une re-somme de
+> `bets.points_awarded`. Les paris ne pilotent plus que le **nombre de pronostics**
+> et la **précision**.
+>
+> **`signIn` reste bloquant si l'upsert de la fiche `users` échoue** (choix
+> assumé, cf. `src/lib/auth/upsert-player.ts` + `auth/config.ts`) : pas de session
+> sans ligne `users`. À l'inverse, l'**assignation de coalition est best-effort**
+> et ne bloque **jamais** le login.
 
 ### `matches`
 Source football-data.org. `football_data_id` UNIQUE = clé d'idempotence du sync.

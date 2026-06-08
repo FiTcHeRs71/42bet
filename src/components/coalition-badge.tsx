@@ -12,6 +12,12 @@ const SIZE = {
   lg: "h-7 px-3 text-sm",
 } as const;
 
+const LOGO_SIZE = {
+  sm: "h-3.5 w-3.5",
+  md: "h-4 w-4",
+  lg: "h-5 w-5",
+} as const;
+
 export function CoalitionBadge({
   coalition,
   size = "md",
@@ -37,8 +43,20 @@ export function CoalitionBadge({
         backgroundColor: coalition.color,
         color: readableTextColor(coalition.color),
       }}
-      className={`inline-flex items-center whitespace-nowrap rounded-full font-semibold ${SIZE[size]}`}
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full font-semibold ${SIZE[size]}`}
     >
+      {coalition.image_url && (
+        <span
+          className={`inline-flex shrink-0 items-center justify-center rounded-full bg-white ${LOGO_SIZE[size]}`}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={coalition.image_url}
+            alt=""
+            className="h-full w-full rounded-full object-contain p-0.5"
+          />
+        </span>
+      )}
       {coalition.name}
     </span>
   );

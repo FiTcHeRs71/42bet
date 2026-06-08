@@ -9,14 +9,15 @@ import {
   type LeaderboardPlayer,
 } from "../src/lib/leaderboard";
 
-const COA = { name: "The Federation", color: "#39c2c2", image_url: null };
+const COA = { ft_id: 192, name: "The Federation", color: "#39c2c2", image_url: null };
 
 function player(
   id: string,
   login: string,
+  total_points = 0,
   coalition: LeaderboardPlayer["coalition"] = null,
 ): LeaderboardPlayer {
-  return { id, login, avatar_url: null, coalition };
+  return { id, login, avatar_url: null, total_points, coalition };
 }
 
 describe("buildLeaderboard", () => {
@@ -29,7 +30,7 @@ describe("buildLeaderboard", () => {
   });
 
   test("tri par points décroissant", () => {
-    const players = [player("u1", "alice"), player("u2", "bob")];
+    const players = [player("u1", "alice", 1), player("u2", "bob", 3)];
     const bets: LeaderboardBet[] = [
       { user_id: "u1", points_awarded: 1 },
       { user_id: "u2", points_awarded: 3 },
@@ -41,9 +42,9 @@ describe("buildLeaderboard", () => {
 
   test("ex æquo -> même rang, le suivant saute (1,1,3)", () => {
     const players = [
-      player("u1", "alice"),
-      player("u2", "bob"),
-      player("u3", "carol"),
+      player("u1", "alice", 3),
+      player("u2", "bob", 3),
+      player("u3", "carol", 1),
     ];
     const bets: LeaderboardBet[] = [
       { user_id: "u1", points_awarded: 3 },
@@ -55,7 +56,7 @@ describe("buildLeaderboard", () => {
   });
 
   test("départage par login à points égaux", () => {
-    const players = [player("u2", "bob"), player("u1", "alice")];
+    const players = [player("u2", "bob", 3), player("u1", "alice", 3)];
     const bets: LeaderboardBet[] = [
       { user_id: "u2", points_awarded: 3 },
       { user_id: "u1", points_awarded: 3 },
@@ -84,28 +85,28 @@ describe("buildLeaderboard", () => {
     expect(r[0].bets).toBe(1);
   });
 
-  test("points somme correctement, null compté 0", () => {
-    const players = [player("u1", "alice")];
+  test("points proviennent de total_points (pas de la somme des bets)", () => {
+    const players = [player("u1", "alice", 42)];
     const bets: LeaderboardBet[] = [
       { user_id: "u1", points_awarded: 3 },
-      { user_id: "u1", points_awarded: null },
       { user_id: "u1", points_awarded: 1 },
     ];
     const r = buildLeaderboard(players, bets);
-    expect(r[0].points).toBe(4);
+    expect(r[0].points).toBe(42); // total_points, pas 4
+    expect(r[0].bets).toBe(2); // nb de pronos inchangé
   });
 
   test("coalition propagée telle quelle", () => {
-    const players = [player("u1", "alice", COA)];
+    const players = [player("u1", "alice", 1, COA)];
     const bets: LeaderboardBet[] = [{ user_id: "u1", points_awarded: 1 }];
     const r = buildLeaderboard(players, bets);
     expect(r[0].coalition).toEqual(COA);
   });
 });
 
-const FED = { name: "Federation", color: "#39c2c2", image_url: null };
-const ORDER = { name: "Order", color: "#9b59b6", image_url: null };
-const ALLI = { name: "Alliance", color: "#e67e22", image_url: null };
+const FED = { ft_id: 192, name: "Federation", color: "#39c2c2", image_url: null };
+const ORDER = { ft_id: 191, name: "Order", color: "#9b59b6", image_url: null };
+const ALLI = { ft_id: 168, name: "Alliance", color: "#e67e22", image_url: null };
 
 function entry(
   login: string,
@@ -174,5 +175,28 @@ describe("buildCoalitionLeaderboard", () => {
       "Alliance",
     ]);
     expect(r.map((c) => c.rank)).toEqual([1, 1, 3]);
+  });
+
+  test("fusionne les Houses homonymes et garde la couleur du cursus prioritaire", () => {
+    const houseC21 = { ft_id: 192, name: "House of Threads", color: "#599ac2", image_url: "c21" };
+    const houseC1 = { ft_id: 189, name: "House of Threads", color: "#528AAE", image_url: "c1" };
+    const entries = [
+      entry("alice", 4, houseC21),
+      entry("bob", 2, houseC1),
+    ];
+    const r = buildCoalitionLeaderboard(entries);
+    expect(r).toHaveLength(1);
+    expect(r[0].coalition.name).toBe("House of Threads");
+    expect(r[0].coalition.color).toBe("#599ac2"); // couleur c21 (priorité 3)
+    expect(r[0].coalition.image_url).toBe("c21");
+    expect(r[0].totalPoints).toBe(6);
+    expect(r[0].players).toBe(2);
+  });
+
+  test("couleur canonique indépendante de l'ordre des entrées", () => {
+    const houseC21 = { ft_id: 192, name: "House of Threads", color: "#599ac2", image_url: "c21" };
+    const houseC1 = { ft_id: 189, name: "House of Threads", color: "#528AAE", image_url: "c1" };
+    const r = buildCoalitionLeaderboard([entry("bob", 2, houseC1), entry("alice", 4, houseC21)]);
+    expect(r[0].coalition.color).toBe("#599ac2");
   });
 });
