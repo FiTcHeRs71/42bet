@@ -6,10 +6,12 @@ import {
   buildCampStandings,
   buildCoalitionLeaderboard,
   buildLeaderboard,
+  buildProfileRanks,
   type CampStanding,
   type LeaderboardBet,
   type LeaderboardEntry,
   type LeaderboardPlayer,
+  type ProfileRanks,
 } from "../src/lib/leaderboard";
 import { coalitionGroupOf } from "../src/lib/coalitions";
 
@@ -284,5 +286,59 @@ describe("buildCampStandings", () => {
 
   test("aucune entry -> []", () => {
     expect(buildCampStandings([])).toEqual([]);
+  });
+});
+
+describe("buildProfileRanks", () => {
+  const threads = { ft_id: 192, name: "House of Threads", color: "#599ac2", image_url: null };
+  const cores = { ft_id: 191, name: "House of Cores", color: "#B23256", image_url: null };
+  const frogs = { ft_id: 167, name: "The Frogs", color: "#6c8946", image_url: null };
+
+  function entry(
+    login: string,
+    points: number,
+    coalition: LeaderboardEntry["coalition"],
+  ): Omit<LeaderboardEntry, "rank"> {
+    return { login, avatarUrl: null, coalition, points, bets: 1, accuracy: null };
+  }
+
+  const entries: LeaderboardEntry[] = assignRanks([
+    entry("alice", 10, cores),
+    entry("bob", 8, threads),
+    entry("carol", 6, threads),
+    entry("dan", 4, frogs),
+    entry("eve", 2, frogs),
+  ]);
+
+  test("rangs général / camp / coalition + totaux (joueur cursus)", () => {
+    const r = buildProfileRanks(entries, "carol");
+    expect(r.general).toEqual({ rank: 3, total: 5 });
+    expect(r.camp).toEqual({ rank: 3, total: 3, label: "Students" });
+    expect(r.coalition).toEqual({ rank: 2, total: 2, name: "House of Threads" });
+  });
+
+  test("joueur piscine : camp Piscineux, coalition Frogs", () => {
+    const r = buildProfileRanks(entries, "dan");
+    expect(r.general).toEqual({ rank: 4, total: 5 });
+    expect(r.camp).toEqual({ rank: 1, total: 2, label: "Piscineux" });
+    expect(r.coalition).toEqual({ rank: 1, total: 2, name: "The Frogs" });
+  });
+
+  test("joueur sans coalition : camp et coalition null", () => {
+    const withSolo = assignRanks([
+      entry("alice", 10, cores),
+      entry("solo", 5, null),
+    ] as Parameters<typeof assignRanks>[0]);
+    const r = buildProfileRanks(withSolo, "solo");
+    expect(r.general).toEqual({ rank: 2, total: 2 });
+    expect(r.camp).toBeNull();
+    expect(r.coalition).toBeNull();
+  });
+
+  test("joueur absent (0 prono) : tout null", () => {
+    const r = buildProfileRanks(entries, "ghost");
+    expect(r.general).toBeNull();
+    expect(r.camp).toBeNull();
+    expect(r.coalition).toBeNull();
   });
 });

@@ -230,3 +230,60 @@ export function buildCampStandings(entries: LeaderboardEntry[]): CampStanding[] 
     return { rank, ...entry };
   });
 }
+
+export type ProfileRanks = {
+  general: { rank: number; total: number } | null;
+  camp: { rank: number; total: number; label: string } | null;
+  coalition: { rank: number; total: number; name: string } | null;
+};
+
+/**
+ * Rangs individuels d'un joueur dans 3 dimensions, dérivés des `entries` déjà
+ * produites par buildLeaderboard (parieurs actifs). Rang ET dénominateur
+ * proviennent du même sous-ensemble. Aucun recalcul de points (rule #7).
+ * Si le joueur n'a pas parié (absent de `entries`) -> tout null. Sans coalition
+ * -> camp et coalition null.
+ */
+export function buildProfileRanks(
+  entries: LeaderboardEntry[],
+  login: string,
+): ProfileRanks {
+  const self = entries.find((e) => e.login === login);
+  if (!self) return { general: null, camp: null, coalition: null };
+
+  const general = { rank: self.rank, total: entries.length };
+
+  if (self.coalition === null) {
+    return { general, camp: null, coalition: null };
+  }
+
+  const selfGroup = coalitionGroupOf(self.coalition.ft_id);
+  const campEntries = assignRanks(
+    entries
+      .filter(
+        (e) => e.coalition !== null && coalitionGroupOf(e.coalition.ft_id) === selfGroup,
+      )
+      .map(({ rank: _rank, ...e }) => e),
+  );
+  const campSelf = campEntries.find((e) => e.login === login)!;
+  const camp = {
+    rank: campSelf.rank,
+    total: campEntries.length,
+    label: CAMP_LABEL[selfGroup],
+  };
+
+  const coalitionName = self.coalition.name;
+  const coalitionEntries = assignRanks(
+    entries
+      .filter((e) => e.coalition !== null && e.coalition.name === coalitionName)
+      .map(({ rank: _rank, ...e }) => e),
+  );
+  const coalitionSelf = coalitionEntries.find((e) => e.login === login)!;
+  const coalition = {
+    rank: coalitionSelf.rank,
+    total: coalitionEntries.length,
+    name: coalitionName,
+  };
+
+  return { general, camp, coalition };
+}
