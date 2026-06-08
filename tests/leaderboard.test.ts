@@ -8,6 +8,7 @@ import {
   type LeaderboardEntry,
   type LeaderboardPlayer,
 } from "../src/lib/leaderboard";
+import { coalitionGroupOf } from "../src/lib/coalitions";
 
 const COA = { ft_id: 192, name: "The Federation", color: "#39c2c2", image_url: null };
 
@@ -198,5 +199,27 @@ describe("buildCoalitionLeaderboard", () => {
     const houseC1 = { ft_id: 189, name: "House of Threads", color: "#528AAE", image_url: "c1" };
     const r = buildCoalitionLeaderboard([entry("bob", 2, houseC1), entry("alice", 4, houseC21)]);
     expect(r[0].coalition.color).toBe("#599ac2");
+  });
+});
+
+describe("coalitionGroupOf", () => {
+  test("coalitions cursus 21 -> cursus", () => {
+    expect(coalitionGroupOf(191)).toBe("cursus");
+    expect(coalitionGroupOf(192)).toBe("cursus");
+    expect(coalitionGroupOf(193)).toBe("cursus");
+  });
+
+  test("coalitions piscine (cursus 9) -> piscine", () => {
+    expect(coalitionGroupOf(166)).toBe("piscine");
+    expect(coalitionGroupOf(167)).toBe("piscine");
+    expect(coalitionGroupOf(168)).toBe("piscine");
+  });
+
+  test("cursus legacy (1) -> cursus", () => {
+    expect(coalitionGroupOf(188)).toBe("cursus");
+  });
+
+  test("ft_id inconnu -> cursus (fallback)", () => {
+    expect(coalitionGroupOf(99999)).toBe("cursus");
   });
 });
