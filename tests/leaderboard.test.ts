@@ -2,8 +2,11 @@
 import { describe, test, expect } from "vitest";
 
 import {
+  assignRanks,
+  buildCampStandings,
   buildCoalitionLeaderboard,
   buildLeaderboard,
+  type CampStanding,
   type LeaderboardBet,
   type LeaderboardEntry,
   type LeaderboardPlayer,
@@ -221,5 +224,20 @@ describe("coalitionGroupOf", () => {
 
   test("ft_id inconnu -> cursus (fallback)", () => {
     expect(coalitionGroupOf(99999)).toBe("cursus");
+  });
+});
+
+describe("assignRanks", () => {
+  function entry(login: string, points: number): Omit<LeaderboardEntry, "rank"> {
+    return { login, avatarUrl: null, coalition: null, points, bets: 1, accuracy: null };
+  }
+
+  test("[] -> []", () => {
+    expect(assignRanks([])).toEqual([]);
+  });
+
+  test("rang standard 1,1,3 et recalcule un rang préexistant", () => {
+    const r = assignRanks([entry("a", 5), entry("b", 5), entry("c", 2)]);
+    expect(r.map((e) => e.rank)).toEqual([1, 1, 3]);
   });
 });

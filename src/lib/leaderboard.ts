@@ -37,6 +37,25 @@ export type LeaderboardEntry = {
   accuracy: number | null; // 0..1 ; null si aucun prono noté
 };
 
+/**
+ * Applique le rang standard (1,1,3) à une liste DÉJÀ triée par points
+ * décroissants. Recalcule `rank` à partir de l'ordre, en ignorant tout rang
+ * préexistant — réutilisable pour re-classer un sous-ensemble filtré.
+ */
+export function assignRanks(
+  entries: Omit<LeaderboardEntry, "rank">[],
+): LeaderboardEntry[] {
+  let lastPoints: number | null = null;
+  let lastRank = 0;
+  return entries.map((entry, index) => {
+    const rank =
+      lastPoints !== null && entry.points === lastPoints ? lastRank : index + 1;
+    lastPoints = entry.points;
+    lastRank = rank;
+    return { rank, ...entry };
+  });
+}
+
 export function buildLeaderboard(
   players: LeaderboardPlayer[],
   bets: LeaderboardBet[],
@@ -78,15 +97,7 @@ export function buildLeaderboard(
   );
 
   // 4. Rang standard (1,1,3) : même rang à points égaux, le suivant saute.
-  let lastPoints: number | null = null;
-  let lastRank = 0;
-  return aggregated.map((entry, index) => {
-    const rank =
-      lastPoints !== null && entry.points === lastPoints ? lastRank : index + 1;
-    lastPoints = entry.points;
-    lastRank = rank;
-    return { rank, ...entry };
-  });
+  return assignRanks(aggregated);
 }
 
 export type CoalitionStanding = {
