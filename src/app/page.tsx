@@ -99,11 +99,11 @@ export default async function Home() {
                   </span>
                   <Link
                     href={`/profile/${e.login}`}
-                    className="flex-1 truncate font-medium hover:text-accent"
+                    className="min-w-0 flex-1 truncate font-medium hover:text-accent"
                   >
                     {e.login}
                   </Link>
-                  <CoalitionBadge coalition={e.coalition} size="sm" />
+                  <CoalitionBadge coalition={e.coalition} size="sm" showLabel={false} />
                   <span className="shrink-0 font-semibold tabular-nums">
                     {e.points} pt
                   </span>

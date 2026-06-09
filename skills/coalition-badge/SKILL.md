@@ -30,13 +30,24 @@ type Coalition = {
 type Props = {
   coalition: Coalition | null;
   size?: "sm" | "md" | "lg";  // défaut "md"
+  showLabel?: boolean;        // défaut true ; false = pastille logo-seul
 };
 
-export function CoalitionBadge({ coalition, size = "md" }: Props) {
-  if (!coalition) return <NeutralBadge size={size} />;
+export function CoalitionBadge({ coalition, size = "md", showLabel = true }: Props) {
+  if (!coalition) return <NeutralBadge size={size} showLabel={showLabel} />;
   // ...
 }
 ```
+
+### Mode logo-seul (`showLabel={false}`)
+
+Pour les **lignes de classement denses** (notamment mobile), passer
+`showLabel={false}` : le badge devient une **pastille circulaire à largeur fixe**
+(couleur coalition + logo, **sans le nom**). Ça évite le débordement horizontal
+d'un nom long (« House of Processes ») sur écran étroit. Le nom reste accessible
+via `aria-label` **et** `title` (tooltip au survol). À réserver aux listes : dans
+l'onglet « Coalitions » et le header de profil, on garde le nom (`showLabel`
+implicite à `true`).
 
 ## Tailles
 

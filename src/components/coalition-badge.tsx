@@ -18,20 +18,67 @@ const LOGO_SIZE = {
   lg: "h-5 w-5",
 } as const;
 
+// Pastille circulaire (mode logo-seul) : largeur fixe, ne déborde jamais d'une
+// ligne de classement étroite (mobile).
+const DOT_SIZE = {
+  sm: "h-5 w-5",
+  md: "h-6 w-6",
+  lg: "h-7 w-7",
+} as const;
+
 export function CoalitionBadge({
   coalition,
   size = "md",
+  showLabel = true,
 }: {
   coalition: Coalition | null;
   size?: keyof typeof SIZE;
+  // false = pastille logo-seul (sans le nom), pour les lignes denses (mobile).
+  // Le nom reste exposé via aria-label/title (accessibilité + survol).
+  showLabel?: boolean;
 }) {
   if (!coalition) {
     return (
       <span
         aria-label="Sans coalition"
-        className={`inline-flex items-center rounded-full bg-zinc-200 font-medium text-zinc-500 dark:bg-zinc-700 dark:text-zinc-300 ${SIZE[size]}`}
+        className={
+          showLabel
+            ? `inline-flex items-center rounded-full bg-zinc-200 font-medium text-zinc-500 dark:bg-zinc-700 dark:text-zinc-300 ${SIZE[size]}`
+            : `inline-flex shrink-0 items-center justify-center rounded-full bg-zinc-200 text-[10px] font-medium text-zinc-500 dark:bg-zinc-700 dark:text-zinc-300 ${DOT_SIZE[size]}`
+        }
       >
         —
+      </span>
+    );
+  }
+
+  if (!showLabel) {
+    return (
+      <span
+        aria-label={coalition.name}
+        title={coalition.name}
+        style={{ backgroundColor: coalition.color }}
+        className={`inline-flex shrink-0 items-center justify-center rounded-full ${DOT_SIZE[size]}`}
+      >
+        {coalition.image_url ? (
+          <span
+            className={`inline-flex items-center justify-center rounded-full bg-white ${LOGO_SIZE[size]}`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={coalition.image_url}
+              alt=""
+              className="h-full w-full rounded-full object-contain p-0.5"
+            />
+          </span>
+        ) : (
+          <span
+            style={{ color: readableTextColor(coalition.color) }}
+            className="text-[10px] font-bold"
+          >
+            {coalition.name.slice(0, 1)}
+          </span>
+        )}
       </span>
     );
   }
