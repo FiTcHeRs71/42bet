@@ -11,7 +11,6 @@ import {
   type LeaderboardBet,
   type LeaderboardEntry,
   type LeaderboardPlayer,
-  type ProfileRanks,
 } from "../src/lib/leaderboard";
 import { coalitionGroupOf } from "../src/lib/coalitions";
 
