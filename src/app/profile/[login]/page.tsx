@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { CoalitionBadge } from "@/components/coalition-badge";
 import { listAllBets, listBetsWithMatchByUser } from "@/lib/bets";
-import { buildLeaderboard } from "@/lib/leaderboard";
+import { buildLeaderboard, buildProfileRanks, type ProfileRanks } from "@/lib/leaderboard";
 import {
   buildProfileHistory,
   countOutcomes,
@@ -41,8 +41,9 @@ export default async function ProfilePage({
   const player = players.find((p) => p.login === login);
   if (!player) notFound();
 
-  const entry =
-    buildLeaderboard(players, allBets).find((e) => e.login === login) ?? null;
+  const entries = buildLeaderboard(players, allBets);
+  const entry = entries.find((e) => e.login === login) ?? null;
+  const ranks = buildProfileRanks(entries, login);
   const history = buildProfileHistory(await listBetsWithMatchByUser(player.id));
   const counts = countOutcomes(history);
   const { pending, played } = partitionHistory(history);
@@ -68,6 +69,7 @@ export default async function ProfilePage({
           <div className="mt-1">
             <CoalitionBadge coalition={player.coalition} size="md" />
           </div>
+          <RankLine ranks={ranks} />
         </div>
       </header>
 
@@ -185,5 +187,27 @@ function OutcomeChip({ n, label, cls }: { n: number; label: string; cls: string 
       <span className="block text-lg font-bold tabular-nums">{n}</span>
       {label}
     </div>
+  );
+}
+
+/** Ordinal français : 1 -> "1ᵉʳ", n -> "nᵉ". */
+function ordinalFr(n: number): string {
+  return n === 1 ? "1ᵉʳ" : `${n}ᵉ`;
+}
+
+/** Ligne compacte des 3 rangs sous le badge. Masquée si le joueur n'a pas parié. */
+function RankLine({ ranks }: { ranks: ProfileRanks }) {
+  if (ranks.general === null) return null;
+  const parts = [`${ordinalFr(ranks.general.rank)}/${ranks.general.total} général`];
+  if (ranks.camp) {
+    parts.push(`${ordinalFr(ranks.camp.rank)}/${ranks.camp.total} ${ranks.camp.label.toLowerCase()}`);
+  }
+  if (ranks.coalition) {
+    parts.push(`${ordinalFr(ranks.coalition.rank)}/${ranks.coalition.total} ${ranks.coalition.name}`);
+  }
+  return (
+    <p className="mt-1.5 text-xs tabular-nums text-zinc-400">
+      {parts.join(" · ")}
+    </p>
   );
 }
