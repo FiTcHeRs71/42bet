@@ -259,11 +259,9 @@ export function buildProfileRanks(
 
   const selfGroup = coalitionGroupOf(self.coalition.ft_id);
   const campEntries = assignRanks(
-    entries
-      .filter(
-        (e) => e.coalition !== null && coalitionGroupOf(e.coalition.ft_id) === selfGroup,
-      )
-      .map(({ rank: _rank, ...e }) => e),
+    entries.filter(
+      (e) => e.coalition !== null && coalitionGroupOf(e.coalition.ft_id) === selfGroup,
+    ),
   );
   const campSelf = campEntries.find((e) => e.login === login)!;
   const camp = {
@@ -274,9 +272,7 @@ export function buildProfileRanks(
 
   const coalitionName = self.coalition.name;
   const coalitionEntries = assignRanks(
-    entries
-      .filter((e) => e.coalition !== null && e.coalition.name === coalitionName)
-      .map(({ rank: _rank, ...e }) => e),
+    entries.filter((e) => e.coalition !== null && e.coalition.name === coalitionName),
   );
   const coalitionSelf = coalitionEntries.find((e) => e.login === login)!;
   const coalition = {
