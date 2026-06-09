@@ -1,7 +1,7 @@
 # Handoff / reprise de session — 42Bet
 
 > Doc de **reprise de travail** (notamment pour changer de machine). Mis à jour à
-> la fin d'une session. Dernière maj : **2026-06-08**.
+> la fin d'une session. Dernière maj : **2026-06-09**.
 >
 > Pour le setup d'une nouvelle machine (clone, `.env.local`, plugins/skills
 > Claude Code) → voir [`deploy.md`](./deploy.md) §1.
@@ -12,6 +12,39 @@
 > **flux PR obligatoire** réactivé (review + merge squash, plus de merge direct
 > sur `main`). Cf. [`AGENTS.md`](../AGENTS.md) §8. Doc d'onboarding complétée :
 > `architecture.md`, `api-42.md`, `football-data.md` ajoutés.
+
+---
+
+## 0. État courant — ALPHA DÉPLOYÉE (2026-06-09)
+
+> Section de tête : l'état **vrai** aujourd'hui. Les sections numérotées plus bas
+> (1, 1bis, 1ter…) sont l'historique des chantiers, conservé tel quel.
+
+- ✅ **Alpha déployée sur Vercel** depuis `main` (dernier commit `cbbe02f`,
+  *chore: trigger prod redeploy*). Login réservé au campus **47** (Lausanne).
+- ✅ **135 tests verts**, `typecheck` + `lint` propres. `main` vert, synchro
+  `origin/main`.
+- ✅ **Flux PR effectif** : PR #4 → #9 toutes mergées en **squash**. Plus de
+  merge direct sur `main`.
+- ✅ **Crons (plan Vercel Hobby)** : `sync-matches` sur cron Vercel (quotidien) ;
+  `sync-results` **externalisé sur GitHub Actions** (`*/5`,
+  `.github/workflows/cron-sync-results.yml`, secrets repo `PROD_URL` +
+  `CRON_SECRET`). Cf. `architecture.md` §3c.
+- ✅ **Leaderboard segmenté** (PR #8) : filtre **général / par camp
+  (Students vs Piscineux) / par coalition** ; `buildCampStandings` +
+  `buildCoalitionLeaderboard` purs ; camps dérivés via `coalitionGroupOf`
+  (cursus 9 = Piscine → "Piscineux", reste → "Students"), sans colonne DB dédiée.
+- ✅ **Rangs sur le profil** (PR #9, intégrée à #8 au merge) :
+  `buildProfileRanks` (pur) + composant `RankLine` affichent le rang ordinal du
+  joueur en **général / camp / coalition** sur `/profile/:login`.
+- ✅ **`assignRanks` extrait** (rang standard 1,1,3 réutilisable) + **fix** : un
+  rang périmé ne peut plus écraser le rang recalculé (régression couverte par un
+  test).
+
+**Reste à faire** : (1) vérifier les secrets Actions `PROD_URL`/`CRON_SECRET` en
+prod et surveiller un tick `sync-results` réel ; (2) régénérer `FT_API_SECRET`
+sur l'intra 42 ; (3) insérer/scorer les matchs amicaux à la main
+(`docs/alpha-amicaux.md`) ; (4) bonus restant : notifications / feed d'activité.
 
 ---
 

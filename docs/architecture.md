@@ -77,7 +77,10 @@ Détail complet : [`api-42.md`](./api-42.md).
 
 ### c) Scoring des paris (cron toutes les 5 min)
 
-`GET /api/cron/sync-results` (Vercel cron `*/5 * * * *`) :
+`GET /api/cron/sync-results`, déclenché **toutes les 5 min par GitHub Actions**
+(`.github/workflows/cron-sync-results.yml`, `*/5 * * * *`) — externalisé car le
+plan Vercel **Hobby** ne permet que des crons quotidiens. L'endpoint est inchangé
+(même protection `CRON_SECRET`, même logique) ; seul le déclencheur a changé :
 
 1. Vérifie `CRON_SECRET` (sinon 401).
 2. **Gate** `hasMatchInResultWindow` : ne touche au réseau que si un match peut
@@ -92,6 +95,11 @@ Détail complet : [`api-42.md`](./api-42.md).
 
 > Les deux crons partagent `fetchWorldCupMatches()` et la classe `ThrottledError`
 > (abandon propre du tick si l'API foot rate-limit).
+>
+> **Topologie crons (plan Vercel Hobby)** : `sync-matches` tourne sur le cron
+> Vercel (quotidien, `vercel.json`) ; `sync-results` tourne sur GitHub Actions
+> (`*/5`, best-effort — le scheduler peut avoir quelques min de retard, OK pour
+> l'alpha). Secrets repo Actions requis : `PROD_URL` + `CRON_SECRET`.
 
 ## 4. Rendu des pages (App Router)
 

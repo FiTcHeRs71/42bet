@@ -155,17 +155,22 @@ npx supabase gen types typescript --linked > src/lib/database.types.ts
       `https://<domaine-prod>/api/auth/callback/42` (en plus de celle de dev).
       Sans ça, le login 42 échoue en prod.
 
-### 5.3 Cron de scoring
+### 5.3 Crons
 
-Le cron est déjà déclaré dans [`../vercel.json`](../vercel.json) :
+⚠️ **Plan Vercel Hobby = crons quotidiens seulement.** D'où la topologie à deux
+déclencheurs (cf. `docs/architecture.md` §3) :
 
-```json
-{ "crons": [{ "path": "/api/cron/sync-results", "schedule": "*/5 * * * *" }] }
-```
+- **`sync-matches`** (ingestion fixtures CM) → cron **Vercel** quotidien, déclaré
+  dans [`../vercel.json`](../vercel.json) (`0 4 * * *`).
+- **`sync-results`** (scoring `*/5`) → **externalisé sur GitHub Actions**
+  (`.github/workflows/cron-sync-results.yml`). Best-effort (le scheduler Actions
+  peut avoir quelques min de retard), suffisant pour l'alpha.
 
-- [ ] Vercel exécute ce cron toutes les 5 min une fois déployé.
 - [ ] Vérifier que `CRON_SECRET` est bien présent dans les env vars Vercel —
-      la route renvoie `401` sans lui (AGENTS §5.8).
+      les routes renvoient `401` sans lui (AGENTS §5.8).
+- [ ] Côté GitHub (Settings → Secrets and variables → Actions), ajouter les
+      secrets repo **`PROD_URL`** (ex. `https://42bet.vercel.app`, sans slash
+      final) et **`CRON_SECRET`** (même valeur que la var Vercel Production).
 
 ### 5.4 Après déploiement
 
@@ -206,9 +211,14 @@ Reprendre toutes les clés de `.env.local.example` :
 Sur https://profile.intra.42.fr/oauth/applications, ajouter la redirect URI :
 `https://<prod>/api/auth/callback/42` (garder aussi celle de localhost pour le dev).
 
-### 4.4 Cron Vercel
-`vercel.json` déclare déjà les crons. Vercel envoie `Authorization: Bearer <CRON_SECRET>`.
-Rien à configurer côté Vercel hormis la variable `CRON_SECRET`.
+### 4.4 Crons (plan Hobby)
+- **Vercel** : `vercel.json` déclare le cron quotidien `sync-matches`. Vercel
+  envoie `Authorization: Bearer <CRON_SECRET>` — rien à configurer hormis la
+  variable `CRON_SECRET` en Production.
+- **GitHub Actions** : le scoring `*/5` (`sync-results`) tourne dans
+  `.github/workflows/cron-sync-results.yml`. Ajouter les secrets repo `PROD_URL`
+  et `CRON_SECRET` (cf. §5.3). Déclenchable à la main via l'onglet **Actions**
+  (`workflow_dispatch`).
 
 ### 4.5 Smoke test post-déploiement
 - Login OAuth avec un compte campus 47 → accès accordé.

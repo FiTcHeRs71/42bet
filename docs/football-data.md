@@ -30,7 +30,13 @@ le cron).
 Les deux routes lisent le **même endpoint** mais en extraient des choses
 différentes (toute la logique d'extraction est **pure et testée**).
 
-### a) Ingestion — `GET /api/cron/sync-matches` (`0 4 * * *`)
+> **Où tournent-ils** : `sync-matches` = cron **Vercel** (`vercel.json`,
+> quotidien) ; `sync-results` = **GitHub Actions** (`*/5`,
+> `.github/workflows/cron-sync-results.yml`) car le plan Vercel Hobby ne permet
+> que des crons quotidiens. Les endpoints sont identiques, seul le déclencheur du
+> tick `*/5` a déménagé.
+
+### a) Ingestion — `GET /api/cron/sync-matches` (`0 4 * * *`, cron Vercel)
 
 Remplit / met à jour la table `matches`.
 
@@ -47,7 +53,7 @@ Remplit / met à jour la table `matches`.
    - un **score déjà enregistré n'est jamais écrasé**.
 5. Réponse : `{ ok: true, upserted: N }` (ou `{ ok: true, throttled: true }`).
 
-### b) Scoring — `GET /api/cron/sync-results` (`*/5 * * * *`)
+### b) Scoring — `GET /api/cron/sync-results` (`*/5 * * * *`, GitHub Actions)
 
 Attribue les points des paris des matchs terminés.
 
