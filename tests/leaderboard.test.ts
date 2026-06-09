@@ -240,6 +240,16 @@ describe("assignRanks", () => {
     const r = assignRanks([entry("a", 5), entry("b", 5), entry("c", 2)]);
     expect(r.map((e) => e.rank)).toEqual([1, 1, 3]);
   });
+
+  test("ignore un rang préexistant sur une entrée déjà classée", () => {
+    // Entrées portant un rang global périmé (7, 9) : assignRanks doit les
+    // re-classer 1,2 sans laisser le rang préexistant l'emporter.
+    const stale: LeaderboardEntry[] = [
+      { rank: 7, login: "a", avatarUrl: null, coalition: null, points: 5, bets: 1, accuracy: null },
+      { rank: 9, login: "b", avatarUrl: null, coalition: null, points: 2, bets: 1, accuracy: null },
+    ];
+    expect(assignRanks(stale).map((e) => e.rank)).toEqual([1, 2]);
+  });
 });
 
 describe("buildCampStandings", () => {

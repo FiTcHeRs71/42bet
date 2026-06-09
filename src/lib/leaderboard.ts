@@ -52,7 +52,9 @@ export function assignRanks(
       lastPoints !== null && entry.points === lastPoints ? lastRank : index + 1;
     lastPoints = entry.points;
     lastRank = rank;
-    return { rank, ...entry };
+    // rank APRÈS le spread : si `entry` porte déjà un rang (sous-ensemble filtré
+    // de LeaderboardEntry), le rang recalculé doit l'emporter, pas l'inverse.
+    return { ...entry, rank };
   });
 }
 
