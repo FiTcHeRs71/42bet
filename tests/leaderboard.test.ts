@@ -2,12 +2,17 @@
 import { describe, test, expect } from "vitest";
 
 import {
+  assignRanks,
+  buildCampStandings,
   buildCoalitionLeaderboard,
   buildLeaderboard,
+  buildProfileRanks,
+  type CampStanding,
   type LeaderboardBet,
   type LeaderboardEntry,
   type LeaderboardPlayer,
 } from "../src/lib/leaderboard";
+import { coalitionGroupOf } from "../src/lib/coalitions";
 
 const COA = { ft_id: 192, name: "The Federation", color: "#39c2c2", image_url: null };
 
@@ -198,5 +203,141 @@ describe("buildCoalitionLeaderboard", () => {
     const houseC1 = { ft_id: 189, name: "House of Threads", color: "#528AAE", image_url: "c1" };
     const r = buildCoalitionLeaderboard([entry("bob", 2, houseC1), entry("alice", 4, houseC21)]);
     expect(r[0].coalition.color).toBe("#599ac2");
+  });
+});
+
+describe("coalitionGroupOf", () => {
+  test("coalitions cursus 21 -> cursus", () => {
+    expect(coalitionGroupOf(191)).toBe("cursus");
+    expect(coalitionGroupOf(192)).toBe("cursus");
+    expect(coalitionGroupOf(193)).toBe("cursus");
+  });
+
+  test("coalitions piscine (cursus 9) -> piscine", () => {
+    expect(coalitionGroupOf(166)).toBe("piscine");
+    expect(coalitionGroupOf(167)).toBe("piscine");
+    expect(coalitionGroupOf(168)).toBe("piscine");
+  });
+
+  test("cursus legacy (1) -> cursus", () => {
+    expect(coalitionGroupOf(188)).toBe("cursus");
+  });
+
+  test("ft_id inconnu -> cursus (fallback)", () => {
+    expect(coalitionGroupOf(99999)).toBe("cursus");
+  });
+});
+
+describe("assignRanks", () => {
+  function entry(login: string, points: number): Omit<LeaderboardEntry, "rank"> {
+    return { login, avatarUrl: null, coalition: null, points, bets: 1, accuracy: null };
+  }
+
+  test("[] -> []", () => {
+    expect(assignRanks([])).toEqual([]);
+  });
+
+  test("rang standard 1,1,3 et recalcule un rang préexistant", () => {
+    const r = assignRanks([entry("a", 5), entry("b", 5), entry("c", 2)]);
+    expect(r.map((e) => e.rank)).toEqual([1, 1, 3]);
+  });
+
+  test("ignore un rang préexistant sur une entrée déjà classée", () => {
+    // Entrées portant un rang global périmé (7, 9) : assignRanks doit les
+    // re-classer 1,2 sans laisser le rang préexistant l'emporter.
+    const stale: LeaderboardEntry[] = [
+      { rank: 7, login: "a", avatarUrl: null, coalition: null, points: 5, bets: 1, accuracy: null },
+      { rank: 9, login: "b", avatarUrl: null, coalition: null, points: 2, bets: 1, accuracy: null },
+    ];
+    expect(assignRanks(stale).map((e) => e.rank)).toEqual([1, 2]);
+  });
+});
+
+describe("buildCampStandings", () => {
+  const cursusCoa = { ft_id: 192, name: "House of Threads", color: "#599ac2", image_url: null };
+  const piscineCoa = { ft_id: 167, name: "The Frogs", color: "#6c8946", image_url: null };
+
+  function e(points: number, coalition: LeaderboardEntry["coalition"]): LeaderboardEntry {
+    return { rank: 0, login: "x", avatarUrl: null, coalition, points, bets: 1, accuracy: null };
+  }
+
+  test("classe à la moyenne : petit camp peut devancer un grand", () => {
+    const r: CampStanding[] = buildCampStandings([
+      e(10, cursusCoa), e(10, cursusCoa), e(2, cursusCoa), // students moy = 22/3 ≈ 7.33
+      e(9, piscineCoa), e(9, piscineCoa),                  // piscineux moy = 9
+    ]);
+    expect(r.map((c) => c.label)).toEqual(["Piscineux", "Students"]);
+    expect(r.map((c) => c.rank)).toEqual([1, 2]);
+    expect(r[0]).toMatchObject({ camp: "piscine", players: 2, totalPoints: 18, average: 9 });
+  });
+
+  test("exclut les joueurs sans coalition", () => {
+    const r = buildCampStandings([e(5, cursusCoa), e(99, null)]);
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ camp: "cursus", players: 1, totalPoints: 5 });
+  });
+
+  test("un seul camp présent -> length 1", () => {
+    const r = buildCampStandings([e(3, piscineCoa)]);
+    expect(r).toHaveLength(1);
+    expect(r[0].label).toBe("Piscineux");
+  });
+
+  test("aucune entry -> []", () => {
+    expect(buildCampStandings([])).toEqual([]);
+  });
+});
+
+describe("buildProfileRanks", () => {
+  const threads = { ft_id: 192, name: "House of Threads", color: "#599ac2", image_url: null };
+  const cores = { ft_id: 191, name: "House of Cores", color: "#B23256", image_url: null };
+  const frogs = { ft_id: 167, name: "The Frogs", color: "#6c8946", image_url: null };
+
+  function entry(
+    login: string,
+    points: number,
+    coalition: LeaderboardEntry["coalition"],
+  ): Omit<LeaderboardEntry, "rank"> {
+    return { login, avatarUrl: null, coalition, points, bets: 1, accuracy: null };
+  }
+
+  const entries: LeaderboardEntry[] = assignRanks([
+    entry("alice", 10, cores),
+    entry("bob", 8, threads),
+    entry("carol", 6, threads),
+    entry("dan", 4, frogs),
+    entry("eve", 2, frogs),
+  ]);
+
+  test("rangs général / camp / coalition + totaux (joueur cursus)", () => {
+    const r = buildProfileRanks(entries, "carol");
+    expect(r.general).toEqual({ rank: 3, total: 5 });
+    expect(r.camp).toEqual({ rank: 3, total: 3, label: "Students" });
+    expect(r.coalition).toEqual({ rank: 2, total: 2, name: "House of Threads" });
+  });
+
+  test("joueur piscine : camp Piscineux, coalition Frogs", () => {
+    const r = buildProfileRanks(entries, "dan");
+    expect(r.general).toEqual({ rank: 4, total: 5 });
+    expect(r.camp).toEqual({ rank: 1, total: 2, label: "Piscineux" });
+    expect(r.coalition).toEqual({ rank: 1, total: 2, name: "The Frogs" });
+  });
+
+  test("joueur sans coalition : camp et coalition null", () => {
+    const withSolo = assignRanks([
+      entry("alice", 10, cores),
+      entry("solo", 5, null),
+    ] as Parameters<typeof assignRanks>[0]);
+    const r = buildProfileRanks(withSolo, "solo");
+    expect(r.general).toEqual({ rank: 2, total: 2 });
+    expect(r.camp).toBeNull();
+    expect(r.coalition).toBeNull();
+  });
+
+  test("joueur absent (0 prono) : tout null", () => {
+    const r = buildProfileRanks(entries, "ghost");
+    expect(r.general).toBeNull();
+    expect(r.camp).toBeNull();
+    expect(r.coalition).toBeNull();
   });
 });

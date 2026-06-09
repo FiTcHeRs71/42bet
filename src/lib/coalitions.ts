@@ -34,6 +34,18 @@ export const COALITION_CURSUS_PRIORITY: Record<number, number> = {
   190: 1, 189: 1, 188: 1, // cursus 1
 };
 
+export type CoalitionGroup = "cursus" | "piscine";
+
+/**
+ * Groupe d'une coalition d'après son cursus. La Piscine (cursus 9, priorité 2)
+ * => "piscine" ; tout le reste (cursus 21 / legacy 1 / inconnu) => "cursus".
+ * Sert à distinguer students et piscineux SANS colonne DB dédiée : un joueur
+ * en cursus est toujours rattaché à sa coalition de cursus (cf. pickUserCoalition).
+ */
+export function coalitionGroupOf(ftId: number): CoalitionGroup {
+  return COALITION_CURSUS_PRIORITY[ftId] === 2 ? "piscine" : "cursus";
+}
+
 export function pickUserCoalition(raw: Ft42Coalition[]): CoalitionRef | null {
   if (raw.length === 0) return null;
 

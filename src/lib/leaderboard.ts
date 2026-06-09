@@ -5,7 +5,7 @@
 // (rule #7). Les pronos ne servent qu'au comptage et au taux de réussite. Tri +
 // ex æquo + accuracy testés dans tests/leaderboard.test.ts.
 
-import { COALITION_CURSUS_PRIORITY } from "@/lib/coalitions";
+import { COALITION_CURSUS_PRIORITY, coalitionGroupOf, type CoalitionGroup } from "@/lib/coalitions";
 
 export type LeaderboardCoalition = {
   ft_id: number;
@@ -36,6 +36,27 @@ export type LeaderboardEntry = {
   bets: number; // nb total de pronos
   accuracy: number | null; // 0..1 ; null si aucun prono noté
 };
+
+/**
+ * Applique le rang standard (1,1,3) à une liste DÉJÀ triée par points
+ * décroissants. Recalcule `rank` à partir de l'ordre, en ignorant tout rang
+ * préexistant — réutilisable pour re-classer un sous-ensemble filtré.
+ */
+export function assignRanks(
+  entries: Omit<LeaderboardEntry, "rank">[],
+): LeaderboardEntry[] {
+  let lastPoints: number | null = null;
+  let lastRank = 0;
+  return entries.map((entry, index) => {
+    const rank =
+      lastPoints !== null && entry.points === lastPoints ? lastRank : index + 1;
+    lastPoints = entry.points;
+    lastRank = rank;
+    // rank APRÈS le spread : si `entry` porte déjà un rang (sous-ensemble filtré
+    // de LeaderboardEntry), le rang recalculé doit l'emporter, pas l'inverse.
+    return { ...entry, rank };
+  });
+}
 
 export function buildLeaderboard(
   players: LeaderboardPlayer[],
@@ -78,15 +99,7 @@ export function buildLeaderboard(
   );
 
   // 4. Rang standard (1,1,3) : même rang à points égaux, le suivant saute.
-  let lastPoints: number | null = null;
-  let lastRank = 0;
-  return aggregated.map((entry, index) => {
-    const rank =
-      lastPoints !== null && entry.points === lastPoints ? lastRank : index + 1;
-    lastPoints = entry.points;
-    lastRank = rank;
-    return { rank, ...entry };
-  });
+  return assignRanks(aggregated);
 }
 
 export type CoalitionStanding = {
@@ -160,4 +173,113 @@ export function buildCoalitionLeaderboard(
     lastRank = rank;
     return { rank, ...entry };
   });
+}
+
+export type CampStanding = {
+  rank: number;
+  camp: CoalitionGroup;
+  label: string; // "Students" | "Piscineux"
+  totalPoints: number;
+  players: number; // parieurs actifs du camp
+  average: number; // totalPoints / players
+};
+
+const CAMP_LABEL: Record<CoalitionGroup, string> = {
+  cursus: "Students",
+  piscine: "Piscineux",
+};
+
+/**
+ * Classement des 2 camps (Students vs Piscineux) à la moyenne de points par
+ * parieur actif. Agrège la sortie de buildLeaderboard ; exclut les joueurs sans
+ * coalition. Aucun recalcul de points (rule #7).
+ */
+export function buildCampStandings(entries: LeaderboardEntry[]): CampStanding[] {
+  const byCamp = new Map<CoalitionGroup, { totalPoints: number; players: number }>();
+  for (const e of entries) {
+    if (e.coalition === null) continue;
+    const camp = coalitionGroupOf(e.coalition.ft_id);
+    const acc = byCamp.get(camp);
+    if (acc) {
+      acc.totalPoints += e.points;
+      acc.players += 1;
+    } else {
+      byCamp.set(camp, { totalPoints: e.points, players: 1 });
+    }
+  }
+
+  const aggregated = [...byCamp.entries()].map(([camp, a]) => ({
+    camp,
+    label: CAMP_LABEL[camp],
+    totalPoints: a.totalPoints,
+    players: a.players,
+    average: a.totalPoints / a.players,
+  }));
+
+  aggregated.sort(
+    (a, b) => b.average - a.average || b.totalPoints - a.totalPoints,
+  );
+
+  let lastAvg: number | null = null;
+  let lastRank = 0;
+  return aggregated.map((entry, index) => {
+    const rank =
+      lastAvg !== null && entry.average === lastAvg ? lastRank : index + 1;
+    lastAvg = entry.average;
+    lastRank = rank;
+    return { rank, ...entry };
+  });
+}
+
+export type ProfileRanks = {
+  general: { rank: number; total: number } | null;
+  camp: { rank: number; total: number; label: string } | null;
+  coalition: { rank: number; total: number; name: string } | null;
+};
+
+/**
+ * Rangs individuels d'un joueur dans 3 dimensions, dérivés des `entries` déjà
+ * produites par buildLeaderboard (parieurs actifs). Rang ET dénominateur
+ * proviennent du même sous-ensemble. Aucun recalcul de points (rule #7).
+ * Si le joueur n'a pas parié (absent de `entries`) -> tout null. Sans coalition
+ * -> camp et coalition null.
+ */
+export function buildProfileRanks(
+  entries: LeaderboardEntry[],
+  login: string,
+): ProfileRanks {
+  const self = entries.find((e) => e.login === login);
+  if (!self) return { general: null, camp: null, coalition: null };
+
+  const general = { rank: self.rank, total: entries.length };
+
+  if (self.coalition === null) {
+    return { general, camp: null, coalition: null };
+  }
+
+  const selfGroup = coalitionGroupOf(self.coalition.ft_id);
+  const campEntries = assignRanks(
+    entries.filter(
+      (e) => e.coalition !== null && coalitionGroupOf(e.coalition.ft_id) === selfGroup,
+    ),
+  );
+  const campSelf = campEntries.find((e) => e.login === login)!;
+  const camp = {
+    rank: campSelf.rank,
+    total: campEntries.length,
+    label: CAMP_LABEL[selfGroup],
+  };
+
+  const coalitionName = self.coalition.name;
+  const coalitionEntries = assignRanks(
+    entries.filter((e) => e.coalition !== null && e.coalition.name === coalitionName),
+  );
+  const coalitionSelf = coalitionEntries.find((e) => e.login === login)!;
+  const coalition = {
+    rank: coalitionSelf.rank,
+    total: coalitionEntries.length,
+    name: coalitionName,
+  };
+
+  return { general, camp, coalition };
 }
