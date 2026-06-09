@@ -184,23 +184,29 @@ export function LeaderboardTabs({
                   >
                     {e.rank}
                   </span>
-                  {e.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={e.avatarUrl}
-                      alt=""
-                      className="h-8 w-8 shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="h-8 w-8 shrink-0 rounded-full bg-white/10" />
-                  )}
                   <Link
                     href={`/profile/${e.login}`}
-                    className="flex-1 truncate font-medium transition-colors hover:text-accent"
+                    aria-label={`Profil de ${e.login}`}
+                    className="shrink-0 rounded-full ring-white/0 transition-shadow hover:ring-2 hover:ring-accent/60"
+                  >
+                    {e.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={e.avatarUrl}
+                        alt=""
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="block h-8 w-8 rounded-full bg-white/10" />
+                    )}
+                  </Link>
+                  <Link
+                    href={`/profile/${e.login}`}
+                    className="min-w-0 flex-1 truncate font-medium transition-colors hover:text-accent"
                   >
                     {e.login}
                   </Link>
-                  <CoalitionBadge coalition={e.coalition} size="sm" />
+                  <CoalitionBadge coalition={e.coalition} size="sm" showLabel={false} />
                   <span className="w-14 shrink-0 text-right tabular-nums">
                     {e.accuracy === null ? "—" : PCT_FMT.format(e.accuracy)}
                   </span>
