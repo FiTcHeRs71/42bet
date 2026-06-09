@@ -44,7 +44,7 @@
 │   ├── bet-points-calc/          calcul des points (fonction pure testée)
 │   ├── coalition-badge/          badge UI coalition 42
 │   ├── conventional-commits/     format des messages de commit
-│   ├── football-data-sync/       cron Vercel idempotent
+│   ├── football-data-sync/       cron idempotent (Vercel + GitHub Actions)
 │   ├── pr-template/              checklist PR
 │   ├── solid-principles/         SOLID adapté TS/React (NON-NÉGOCIABLE)
 │   └── supabase-table-create/    pattern de création de table (RLS)
@@ -54,7 +54,7 @@
 │   ├── app/                      App Router (pages + routes API)
 │   │   └── api/
 │   │       ├── auth/[...nextauth]/   NextAuth v5 (login OAuth 42)
-│   │       └── cron/sync-results/    cron scoring (protégé CRON_SECRET)
+│   │       └── cron/sync-results/    endpoint scoring (protégé CRON_SECRET, déclenché par GitHub Actions)
 │   ├── components/               composants React (site-header, auth-button)
 │   └── lib/                      logique métier pure + wrappers
 │       ├── auth/                 profile (pur), upsert-player (DI), config NextAuth
@@ -64,9 +64,11 @@
 │       └── football-data.ts      wrapper football-data.org
 ├── tests/                        tests unitaires
 ├── public/                       assets statiques
-├── vercel.json                   cron sync-results
+├── vercel.json                   cron sync-matches (quotidien 0 4 * * *)
 ├── .env.local.example            template des secrets
-└── .github/pull_request_template.md
+└── .github/
+    ├── pull_request_template.md
+    └── workflows/cron-sync-results.yml   tick scoring */5 externalisé (plan Hobby)
 ```
 
 ## 4. Skills — règles courtes, lien vers détail
