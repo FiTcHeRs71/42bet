@@ -1,5 +1,10 @@
 # Exception coalition chefs de piscine — Implementation Plan
 
+> **Correction post-implémentation (2026-06-10)** : voir le bandeau de la spec.
+> La map `login → ft_id` et le script `resync-coalition` de ce plan ont été
+> remplacés par un **Set de logins** + sélection de la coalition de groupe
+> « piscine » renvoyée par l'API. Branche `fix/coalition-chefs-piscine-group`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Classer les 3 chefs de piscine (`ludebarn`, `jturrel`, `sweinber`) dans leur coalition de piscine au lieu de leur cursus, et fournir un script de re-sync immédiat, afin de vérifier que le segment Piscine du leaderboard s'affiche et fonctionne.

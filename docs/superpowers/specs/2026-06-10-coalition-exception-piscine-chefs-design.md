@@ -1,5 +1,14 @@
 # Spec — Exception coalition pour les chefs de piscine
 
+> **Correction post-implémentation (2026-06-10)** : la map en dur `login → ft_id`
+> décrite ci-dessous était fragile (ft_id devinés faux pour 2 chefs sur 3) et le
+> script `resync-coalition` ne pouvait pas fonctionner (les coalitions de piscine
+> n'existent en base qu'après le 1er login d'un membre). L'implémentation retenue
+> remplace la map par un **Set de logins** ; `pickUserCoalition` retient la
+> coalition de **groupe « piscine »** réellement renvoyée par l'API pour ce chef.
+> Le script de resync a été retiré : la **reconnexion** crée la coalition et lie
+> le joueur. Cf. branche `fix/coalition-chefs-piscine-group`.
+
 > Date : 2026-06-10 · Branche : `feat/coalition-piscine-chefs` · Statut : design validé
 
 ## Contexte & problème

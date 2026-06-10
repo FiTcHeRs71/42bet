@@ -80,15 +80,17 @@ describe("pickUserCoalition — exception chefs de piscine", () => {
   const sharkC9 = { id: 168, name: "The Sharks", color: "#82CCE0", image_url: "s" };
   const houseC21 = { id: 192, name: "House of Threads", color: "#599ac2", image_url: "u" };
 
-  it("chef de piscine → sa piscine même si le cursus est prioritaire", () => {
-    // ludebarn dirige les Sharks (168). raw contient cursus (prio 3) + piscine (prio 2).
+  it("chef de piscine → sa piscine (groupe piscine) même si le cursus est prioritaire", () => {
+    // un chef est rattaché à la coalition de groupe « piscine » réellement
+    // renvoyée par l'API, sans qu'on ait à connaître laquelle. raw contient
+    // cursus (prio 3) + piscine (prio 2).
     expect(pickUserCoalition([houseC21, sharkC9], "ludebarn")?.ftId).toBe(168);
     // ordre inverse : même résultat
     expect(pickUserCoalition([sharkC9, houseC21], "ludebarn")?.ftId).toBe(168);
   });
 
-  it("chef dont la piscine est absente de raw → repli priorité cursus", () => {
-    // l'API n'a pas renvoyé la piscine : on ne l'invente pas, on prend le cursus.
+  it("chef dont aucune piscine n'est dans raw → repli priorité cursus", () => {
+    // l'API n'a pas renvoyé de coalition piscine : on ne l'invente pas.
     expect(pickUserCoalition([houseC21], "ludebarn")?.ftId).toBe(192);
   });
 
@@ -96,7 +98,8 @@ describe("pickUserCoalition — exception chefs de piscine", () => {
     expect(pickUserCoalition([houseC21, sharkC9], "fducrot")?.ftId).toBe(192);
   });
 
-  it("expose la map des chefs de piscine", () => {
-    expect(PISCINE_CHEFS).toEqual({ ludebarn: 168, jturrel: 167, sweinber: 166 });
+  it("expose le set des logins de chefs de piscine", () => {
+    expect(PISCINE_CHEFS).toBeInstanceOf(Set);
+    expect([...PISCINE_CHEFS].sort()).toEqual(["jturrel", "ludebarn", "sweinber"]);
   });
 });
