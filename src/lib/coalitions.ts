@@ -46,21 +46,6 @@ export function coalitionGroupOf(ftId: number): CoalitionGroup {
   return COALITION_CURSUS_PRIORITY[ftId] === 2 ? "piscine" : "cursus";
 }
 
-/**
- * Chefs de piscine : classés dans leur coalition de PISCINE, pas leur cursus.
- * Set des logins concernés — on ne stocke PAS quelle piscine chacun dirige :
- * `pickUserCoalition` retient la coalition de groupe « piscine » réellement
- * renvoyée par l'API pour ce joueur (cf. coalitionGroupOf). Plus robuste qu'une
- * map login→ft_id (immunisée contre une erreur d'ft_id ou un changement de
- * piscine). Exception TEMPORAIRE (piscine 2026) : retirer ce set quand l'école
- * retire la double affectation — les chefs repasseront alors sur leur cursus.
- */
-export const PISCINE_CHEFS: ReadonlySet<string> = new Set([
-  "ludebarn",
-  "jturrel",
-  "sweinber",
-]);
-
 /** Normalise un élément brut de l'API 42 en CoalitionRef (couleur fallback). */
 function normalise(c: Ft42Coalition): CoalitionRef {
   const color = c.color?.trim() ? c.color.trim() : FALLBACK_COLOR;
@@ -74,17 +59,8 @@ function normalise(c: Ft42Coalition): CoalitionRef {
 
 export function pickUserCoalition(
   raw: Ft42Coalition[],
-  login?: string,
 ): CoalitionRef | null {
   if (raw.length === 0) return null;
-
-  // Exception chefs de piscine : on retourne la coalition de groupe « piscine »
-  // que l'API a renvoyée pour ce joueur. Sinon (aucune piscine reçue), on ne
-  // l'invente pas → repli sur la priorité cursus.
-  if (login !== undefined && PISCINE_CHEFS.has(login)) {
-    const piscine = raw.find((c) => coalitionGroupOf(c.id) === "piscine");
-    if (piscine) return normalise(piscine);
-  }
 
   // Sélection déterministe : priorité de cursus la plus haute (21>9>1). À égalité
   // de priorité (cas improbable), départage par ft_id croissant. Les coalitions
