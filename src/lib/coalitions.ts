@@ -48,16 +48,18 @@ export function coalitionGroupOf(ftId: number): CoalitionGroup {
 
 /**
  * Chefs de piscine : classés dans leur coalition de PISCINE, pas leur cursus.
- * login → ft_id de la coalition piscine dirigée. Exception TEMPORAIRE
- * (piscine 2026) : retirer cette map quand l'école retire la double
- * affectation — `pickUserCoalition` reclassera alors les joueurs sur leur
- * cursus via la priorité normale.
+ * Set des logins concernés — on ne stocke PAS quelle piscine chacun dirige :
+ * `pickUserCoalition` retient la coalition de groupe « piscine » réellement
+ * renvoyée par l'API pour ce joueur (cf. coalitionGroupOf). Plus robuste qu'une
+ * map login→ft_id (immunisée contre une erreur d'ft_id ou un changement de
+ * piscine). Exception TEMPORAIRE (piscine 2026) : retirer ce set quand l'école
+ * retire la double affectation — les chefs repasseront alors sur leur cursus.
  */
-export const PISCINE_CHEFS: Record<string, number> = {
-  ludebarn: 168, // The Sharks
-  jturrel: 167, // The Frogs
-  sweinber: 166, // The Penguins
-};
+export const PISCINE_CHEFS: ReadonlySet<string> = new Set([
+  "ludebarn",
+  "jturrel",
+  "sweinber",
+]);
 
 /** Normalise un élément brut de l'API 42 en CoalitionRef (couleur fallback). */
 function normalise(c: Ft42Coalition): CoalitionRef {
@@ -76,11 +78,11 @@ export function pickUserCoalition(
 ): CoalitionRef | null {
   if (raw.length === 0) return null;
 
-  // Exception chefs de piscine : on retourne leur coalition de piscine si l'API
-  // l'a bien renvoyée. Sinon, on ne l'invente pas → repli sur la priorité cursus.
-  const piscineFtId = login ? PISCINE_CHEFS[login] : undefined;
-  if (piscineFtId !== undefined) {
-    const piscine = raw.find((c) => c.id === piscineFtId);
+  // Exception chefs de piscine : on retourne la coalition de groupe « piscine »
+  // que l'API a renvoyée pour ce joueur. Sinon (aucune piscine reçue), on ne
+  // l'invente pas → repli sur la priorité cursus.
+  if (login !== undefined && PISCINE_CHEFS.has(login)) {
+    const piscine = raw.find((c) => coalitionGroupOf(c.id) === "piscine");
     if (piscine) return normalise(piscine);
   }
 
