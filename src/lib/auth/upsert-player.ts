@@ -45,7 +45,7 @@ export async function upsertPlayer(
   // Best-effort : un échec coalition n'altère jamais le succès du login.
   try {
     const raw = await deps.fetchUserCoalitions(profile.ftId);
-    const ref = pickUserCoalition(raw);
+    const ref = pickUserCoalition(raw, profile.login);
     if (!ref) return;
 
     const { id, error: upsertErr } = await deps.upsertCoalition(ref);

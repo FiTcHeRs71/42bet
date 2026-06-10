@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "simulate-score": "node --env-file=.env.local --import tsx scripts/simulate-score.ts"
+    "simulate-score": "node --env-file=.env.local --import tsx scripts/simulate-score.ts",
+    "resync-coalition": "node --env-file=.env.local --import tsx scripts/resync-coalition.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",
