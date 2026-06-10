@@ -46,8 +46,43 @@ export function coalitionGroupOf(ftId: number): CoalitionGroup {
   return COALITION_CURSUS_PRIORITY[ftId] === 2 ? "piscine" : "cursus";
 }
 
-export function pickUserCoalition(raw: Ft42Coalition[]): CoalitionRef | null {
+/**
+ * Chefs de piscine : classés dans leur coalition de PISCINE, pas leur cursus.
+ * login → ft_id de la coalition piscine dirigée. Exception TEMPORAIRE
+ * (piscine 2026) : retirer cette map quand l'école retire la double
+ * affectation — `pickUserCoalition` reclassera alors les joueurs sur leur
+ * cursus via la priorité normale.
+ */
+export const PISCINE_CHEFS: Record<string, number> = {
+  ludebarn: 168, // The Sharks
+  jturrel: 167, // The Frogs
+  sweinber: 166, // The Penguins
+};
+
+/** Normalise un élément brut de l'API 42 en CoalitionRef (couleur fallback). */
+function normalise(c: Ft42Coalition): CoalitionRef {
+  const color = c.color?.trim() ? c.color.trim() : FALLBACK_COLOR;
+  return {
+    ftId: c.id,
+    name: c.name,
+    color,
+    imageUrl: c.image_url ?? null,
+  };
+}
+
+export function pickUserCoalition(
+  raw: Ft42Coalition[],
+  login?: string,
+): CoalitionRef | null {
   if (raw.length === 0) return null;
+
+  // Exception chefs de piscine : on retourne leur coalition de piscine si l'API
+  // l'a bien renvoyée. Sinon, on ne l'invente pas → repli sur la priorité cursus.
+  const piscineFtId = login ? PISCINE_CHEFS[login] : undefined;
+  if (piscineFtId !== undefined) {
+    const piscine = raw.find((c) => c.id === piscineFtId);
+    if (piscine) return normalise(piscine);
+  }
 
   // Sélection déterministe : priorité de cursus la plus haute (21>9>1). À égalité
   // de priorité (cas improbable), départage par ft_id croissant. Les coalitions
@@ -62,11 +97,5 @@ export function pickUserCoalition(raw: Ft42Coalition[]): CoalitionRef | null {
     }
   }
 
-  const color = best.color?.trim() ? best.color.trim() : FALLBACK_COLOR;
-  return {
-    ftId: best.id,
-    name: best.name,
-    color,
-    imageUrl: best.image_url ?? null,
-  };
+  return normalise(best);
 }
