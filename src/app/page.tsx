@@ -103,7 +103,14 @@ export default async function Home() {
                   >
                     {e.login}
                   </Link>
-                  <CoalitionBadge coalition={e.coalition} size="sm" showLabel={false} />
+                  {/* Mobile : pastille logo-seul */}
+                  <span className="sm:hidden">
+                    <CoalitionBadge coalition={e.coalition} size="sm" showLabel={false} />
+                  </span>
+                  {/* Desktop : badge complet avec nom */}
+                  <span className="hidden sm:inline-flex">
+                    <CoalitionBadge coalition={e.coalition} size="sm" />
+                  </span>
                   <span className="shrink-0 font-semibold tabular-nums">
                     {e.points} pt
                   </span>

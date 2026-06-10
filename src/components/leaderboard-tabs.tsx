@@ -62,7 +62,7 @@ function Segmented<T extends string>({
           type="button"
           onClick={() => onChange(o.key)}
           aria-pressed={value === o.key}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+          className={`inline-flex min-h-[44px] items-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
             value === o.key
               ? "bg-white/15 text-white"
               : "text-zinc-400 hover:text-white"
@@ -206,7 +206,14 @@ export function LeaderboardTabs({
                   >
                     {e.login}
                   </Link>
-                  <CoalitionBadge coalition={e.coalition} size="sm" showLabel={false} />
+                  {/* Mobile : pastille logo-seul */}
+                  <span className="sm:hidden">
+                    <CoalitionBadge coalition={e.coalition} size="sm" showLabel={false} />
+                  </span>
+                  {/* Desktop : badge complet avec nom */}
+                  <span className="hidden sm:inline-flex">
+                    <CoalitionBadge coalition={e.coalition} size="sm" />
+                  </span>
                   <span className="w-14 shrink-0 text-right tabular-nums">
                     {e.accuracy === null ? "—" : PCT_FMT.format(e.accuracy)}
                   </span>
