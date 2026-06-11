@@ -1,7 +1,7 @@
 # Handoff / reprise de session — 42Bet
 
 > Doc de **reprise de travail** (notamment pour changer de machine). Mis à jour à
-> la fin d'une session. Dernière maj : **2026-06-10**.
+> la fin d'une session. Dernière maj : **2026-06-11**.
 >
 > Pour le setup d'une nouvelle machine (clone, `.env.local`, plugins/skills
 > Claude Code) → voir [`deploy.md`](./deploy.md) §1.
@@ -15,35 +15,43 @@
 
 ---
 
-## 0. État courant — PRÉP LANCEMENT RÉEL (2026-06-10)
+## 0. État courant — LANCEMENT RÉEL EFFECTUÉ (2026-06-11)
 
 > Section de tête : l'état **vrai** aujourd'hui. Les sections numérotées plus bas
 > (1, 1bis, 1ter…) sont l'historique des chantiers, conservé tel quel.
 
-### 0a. Prép lancement réel — 2 PR ouvertes (2026-06-10)
+### 0a. Lancement réel — fait (2026-06-11)
 
-Objectif : repartir d'une **base propre** pour la Coupe du Monde. Deux volets
-indépendants, **PR ouvertes, pas encore mergées** (on s'en occupe plus tard).
+L'alpha est **terminée** ; la version officielle tourne sur la **même base** que
+l'alpha (toujours **login réservé au campus 47 Lausanne** — pas d'ouverture au-delà,
+décision assumée même en officiel). Séquence exécutée ce matin :
+
+1. **PR #15 + PR #16 squash-mergées** dans `main` (`ca12150`), branches supprimées.
+   - **PR #15** — retrait de l'exception coalition chefs de piscine (revert
+     `PISCINE_CHEFS` : `pickUserCoalition` sans `login`, tests d'exception retirés).
+   - **PR #16** — `scripts/reset-play-data.ts` + spec/plan + docs.
+   - Aucun conflit de fichiers entre les deux. Gates verts sur `main` combiné :
+     **135 tests**, typecheck, lint, build prod. Déploiement prod auto depuis `main`.
+2. **Reset prod exécuté** : `npm run reset-play-data -- --yes`. Backup pré-wipe
+   `backups/reset-2026-06-11T05-16-21-596Z.json`. Avant : 107 matchs / 39 paris /
+   6 joueurs avec points. Après : `matches: 0`, `bets: 0`, `usersWithPoints: []`.
+   Testeurs reclassés cursus : `ludebarn`/`jturrel` → House of Cores,
+   `sweinber` → House of Processes.
+3. **Re-sync manuel des matchs CM** (la base était vide) : `GET /api/cron/sync-matches`
+   déclenché à la main via serveur dev local (écrit en prod). Réponse
+   `{"ok":true,"upserted":104}`. Vérifié en base : **`matches: 104`**, `bets: 0`.
+   Idempotent — le cron Vercel quotidien reprend le rythme normal ensuite.
+
 Spec : `docs/superpowers/specs/2026-06-10-prep-lancement-reel-design.md` ·
 Plan : `docs/superpowers/plans/2026-06-10-prep-lancement-reel.md`.
 
-- **Volet 1 — retrait de l'exception coalition chefs de piscine**
-  (branche `chore/remove-coalition-exception`, **PR #15**). Revert de la feature
-  alpha-only `PISCINE_CHEFS` : `pickUserCoalition` ne prend plus de `login`, plus
-  de branche chef, tests d'exception retirés des 2 suites. **À merger + déployer
-  AVANT le reset** (sinon un re-login d'un chef le re-classerait sur sa piscine).
-  À la prochaine connexion : `ludebarn`/`jturrel` → House of Cores,
-  `sweinber` → House of Processes.
-- **Volet 2 — script de reset + docs** (branche `chore/prep-lancement-reel`,
-  **PR #16**). `scripts/reset-play-data.ts` (`npm run reset-play-data`) :
-  **dry-run par défaut**, backup JSON horodaté dans `backups/` (gitignored),
-  garde-fou `-- --yes`. Wipe `matches` (paris en cascade) + `total_points = 0` +
-  reclassement cursus des 3 testeurs. N'affecte pas l'app (script non importé).
-  Dry-run validé contre la prod : **107 matchs, 39 paris** détectés, 0 écriture.
+> ℹ️ Note Vercel : les checks **preview** des PR #15/#16 étaient en `FAILURE`
+> (env preview), mais ce n'est **pas un check requis** et le build prod local était
+> vert — confirmé sans incidence. À vérifier côté dashboard : que le déploiement
+> **production** depuis `main` soit bien passé au vert.
 
-**Reste à faire (manuel, dans l'ordre)** : (1) relire + merger **PR #15**, attendre
-le **déploiement** ; (2) relire + merger **PR #16** ; (3) **à la fin de l'alpha**,
-lancer `npm run reset-play-data -- --yes`.
+**Reste à faire (manuel)** : surveiller le 1ᵉʳ tick `sync-results` réel pendant la
+CM ; régénérer `FT_API_SECRET` sur l'intra 42 ; bonus restant (notifications / feed).
 
 ### 0b. Lisibilité mobile leaderboard + chefs de piscine (PR #11–#14, mergées)
 
