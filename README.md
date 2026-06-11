@@ -1,79 +1,206 @@
-# 42Bet
+<div align="center">
 
-Web app de pronostics foot **sans argent réel** pour les étudiants et piscineux de l'École 42 Lausanne, à l'occasion de la Coupe du Monde + nouvelle Piscine 42.
+# ⚽ 42Bet
 
-> 🚧 En cours de développement — **MVP complet** (auth 42, liste des matchs, paris, scoring, classement) **+ bonus livrés** (page profil `/profile/:login`, classement par coalition). Phase **pré-déploiement**.
+**Pronostics foot — sans argent réel — pour les étudiants de l'École 42 Lausanne.**
 
-## Concept
+Parie sur les matchs de la Coupe du Monde avec ton login intra, marque des points,
+et grimpe au classement de ta coalition. Zéro pari d'argent : juste de la fierté.
 
-- Auth via l'API 42 (OAuth2) — chaque joueur joue avec son login intra
-- Pronostics vainqueur + score avant chaque match
-- Verrou automatique au coup d'envoi
-- Calcul auto des points : **+1** bon vainqueur (ou nul), **+3** score exact
-- Classement avec photo et badge coalition
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-149eca?logo=react)](https://react.dev/)
+[![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ecf8e?logo=supabase)](https://supabase.com/)
+[![Deployed on Vercel](https://img.shields.io/badge/Vercel-deployed-black?logo=vercel)](https://42bet.vercel.app)
 
-## Stack
+[Démo](https://42bet.vercel.app) · [Documentation](./docs/README.md) · [Contribuer](#-contribuer)
 
-- **Next.js** (App Router, TypeScript, Tailwind CSS)
-- **Supabase** (PostgreSQL + Auth + RLS)
-- **Vercel** (hosting + Cron Jobs)
-- **NextAuth.js** avec provider OAuth 42 custom
-- **football-data.org** pour les matchs et résultats
+</div>
 
-## Démarrer en local
+---
 
-```bash
-npm install
-cp .env.local.example .env.local
-# remplir les variables d'environnement
-npm run dev
+## ✨ Le concept
+
+42Bet est une web app de pronostics sportifs **sans aucune mise d'argent**, pensée
+pour animer une promo de l'[École 42](https://42lausanne.ch/) pendant la Coupe du
+Monde. Chaque joueur se connecte avec son **compte intra 42**, pronostique le
+**vainqueur et le score exact** de chaque match avant le coup d'envoi, puis gagne
+des points selon la justesse de sa prédiction. Les classements se déclinent par
+joueur, par **camp** (étudiants du cursus vs piscineux) et par **coalition 42**.
+
+> 🟢 **En production** sur [42bet.vercel.app](https://42bet.vercel.app). L'accès est
+> volontairement restreint au campus de Lausanne (gate configurable, voir plus bas) —
+> mais le projet est **open source** et entièrement *forkable* pour un autre campus.
+
+## 🎮 Fonctionnalités
+
+- **Connexion via l'API 42** (OAuth2) — pas de mot de passe à gérer, tu joues avec ton login intra, ta photo et ta coalition.
+- **Paris vainqueur + score** avec **verrou automatique au coup d'envoi** (impossible de parier une fois le match commencé).
+- **Scoring automatique** après chaque match, idempotent et centralisé.
+- **Classement segmenté** : général, par camp (Students / Piscineux), par coalition.
+- **Page profil** `/profile/:login` — rangs (général/camp/coalition), stats, taux de réussite et historique.
+- **Badge coalition 42** aux vraies couleurs, vue des matchs groupée par journée.
+
+### Barème des points
+
+| Prédiction | Points |
+|---|:---:|
+| Score exact | **+3** |
+| Bon vainqueur (ou bon nul) | **+1** |
+| Mauvais résultat | **0** |
+
+Le calcul est une **fonction pure** centralisée dans [`src/lib/points.ts`](./src/lib/points.ts) (jamais réimplémentée ailleurs) et couverte par des tests.
+
+## 🧱 Stack
+
+| Couche | Techno |
+|---|---|
+| Framework | **Next.js 16** (App Router, Turbopack) |
+| UI | **React 19** + **Tailwind CSS v4** (syntaxe `@theme`) |
+| Langage | **TypeScript** (strict) |
+| Base de données + Auth | **Supabase** (PostgreSQL + RLS) |
+| Auth web | **NextAuth.js v5** — provider OAuth **42** custom |
+| Données foot | **football-data.org** (gratuit, 10 req/min) |
+| Hébergement | **Vercel** (+ Cron Jobs) |
+| Tests | **Vitest** · Lint **ESLint v9** (flat config) |
+
+## 🏗️ Architecture en bref
+
+```
+Navigateur ─┬─► Server Components (lecture publique via clé anon, RLS)
+            └─► Routes API /api/cron/* (écriture privée via service_role)
+
+intra.42.fr ──(OAuth2, wrapper fetch42 rate-limité)──► profil + coalitions
+football-data.org ──► fixtures & scores
+
+Deux déclencheurs périodiques :
+  • sync-matches  → Cron Vercel quotidien (ingestion des matchs CM)
+  • sync-results  → pinger externe toutes les 2 min (scoring), protégé par CRON_SECRET
 ```
 
-Puis ouvrir http://localhost:3000.
+La logique métier (calcul des points, sélection de coalition, règles de pari,
+orchestration du cron) est écrite en **fonctions pures testées**, séparées des
+I/O (Supabase / API 42) injectés par dépendance. Détails complets dans
+[`docs/architecture.md`](./docs/architecture.md).
 
-## Documentation
+## 🚀 Démarrer en local
 
-Tu rejoins le projet ? Commence par [`docs/README.md`](./docs/README.md), qui
-donne l'ordre de lecture. En bref :
+**Prérequis :** Node.js 20+, un projet [Supabase](https://supabase.com), une app
+OAuth sur l'[intra 42](https://profile.intra.42.fr/oauth/applications), une clé
+[football-data.org](https://www.football-data.org/client/register).
 
-- [`AGENTS.md`](./AGENTS.md) — contexte, stack, conventions, **workflow PR** (§8)
-- [`docs/architecture.md`](./docs/architecture.md) — flux de données, modules
-- [`docs/api-42.md`](./docs/api-42.md) — intégration OAuth 42
-- [`docs/football-data.md`](./docs/football-data.md) — fixtures & scoring (crons)
-- [`docs/database-schema.md`](./docs/database-schema.md) — schéma DB
-- [`docs/deploy.md`](./docs/deploy.md) — setup machine + déploiement
+```bash
+git clone https://github.com/FiTcHeRs71/42bet.git
+cd 42bet
+npm install
+cp .env.local.example .env.local   # puis renseigner les variables (voir ci-dessous)
+npm run dev                        # http://localhost:3000
+```
 
-## Contribuer
+### Variables d'environnement
 
-Projet **en binôme** : toute modif de `main` passe par une **Pull Request relue**
-(une PR = un sujet, merge squash). Avant d'ouvrir une PR :
-`npm test` + `npm run typecheck` + `npm run lint` doivent être verts.
-Détails : [`AGENTS.md`](./AGENTS.md) §8 + [`pr-template`](./skills/pr-template/SKILL.md).
+Toutes décrites dans [`.env.local.example`](./.env.local.example). Aucune n'est
+commitée (les fichiers `.env*` sont gitignorés).
 
-## Structure
+| Variable | Portée | Source |
+|---|---|---|
+| `AUTH_SECRET` | server | `openssl rand -base64 32` |
+| `AUTH_URL` | server | `http://localhost:3000` en dev, URL de prod sinon |
+| `FT_API_UID` / `FT_API_SECRET` | server | App OAuth intra 42 |
+| `FT_API_CAMPUS_ID` | server | ID de campus 42 (`47` = Lausanne) |
+| `FOOTBALL_DATA_API_KEY` | server | football-data.org |
+| `NEXT_PUBLIC_SUPABASE_URL` | client | Supabase → Project Settings → API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | client | Supabase → clé *publishable* |
+| `SUPABASE_SERVICE_ROLE_KEY` | **server-only** | Supabase → clé *secret* (jamais côté client) |
+| `CRON_SECRET` | server | `openssl rand -base64 32` |
+
+> 🔒 Seules les variables `NEXT_PUBLIC_*` sont exposées au navigateur.
+> `SUPABASE_SERVICE_ROLE_KEY` et `FT_API_SECRET` restent strictement server-only.
+
+### Base de données
+
+Le schéma est **versionné** dans [`supabase/migrations/`](./supabase/migrations)
+(jamais modifié via l'UI Supabase) :
+
+```bash
+npx supabase link --project-ref <ton-project-ref>
+npx supabase db push        # applique les migrations
+```
+
+### Commandes utiles
+
+```bash
+npm run dev          # serveur de dev
+npm run build        # build production
+npm run typecheck    # tsc --noEmit
+npm run lint         # ESLint
+npm test             # Vitest
+```
+
+## ☁️ Déploiement
+
+Pensé pour **Vercel** (la prod déploie automatiquement depuis `main`). Le plan
+Hobby ne permettant que des crons quotidiens, le scoring fréquent (`sync-results`)
+est déclenché par un **pinger HTTP externe** toutes les 2 minutes, qui appelle
+l'endpoint avec l'en-tête `Authorization: Bearer <CRON_SECRET>`. Runbook complet,
+configuration OAuth de prod et topologie des crons dans
+[`docs/deploy.md`](./docs/deploy.md).
+
+### Restriction d'accès
+
+Le login est filtré sur un campus 42 précis (gate appliquée **avant** toute
+écriture en base). Pour adapter 42Bet à un autre campus, change l'ID de campus
+dans la configuration d'auth — aucune autre modification n'est nécessaire.
+
+## 📁 Structure du projet
 
 ```
 .
-├── brainstorming.md       Spec initiale du projet
-├── skills/                Skills agent IA (cf. vercel-labs/skills)
-├── docs/                  Documentation technique
-├── supabase/migrations/   Schéma DB versionné
 ├── src/
-│   ├── app/               Pages App Router + routes API
+│   ├── app/               Pages App Router + routes API (auth, cron)
 │   ├── components/        Composants React
-│   └── lib/               Logique métier (points, wrappers API)
-└── tests/                 Tests unitaires
+│   └── lib/               Logique métier pure + wrappers (points, sync, API 42…)
+├── supabase/migrations/   Schéma DB versionné (RLS systématique)
+├── tests/                 Tests unitaires (Vitest)
+├── skills/                Conventions & patterns (à lire avant de coder)
+├── docs/                  Documentation technique
+└── brainstorming.md       Spec d'origine
 ```
 
-## Skills
+## 🤝 Contribuer
 
-Le dossier [`skills/`](./skills/README.md) contient les conventions et patterns du projet au format [vercel-labs/skills](https://github.com/vercel-labs/skills). Toute personne (ou agent IA) qui code sur le projet doit les respecter.
+Les contributions sont bienvenues ! Le projet suit un **flux Pull Request** :
+une PR = un sujet, relue puis mergée en *squash*. Avant d'ouvrir une PR, assure-toi
+que tout est vert :
 
-Skills critiques :
-- [`bet-points-calc`](./skills/bet-points-calc/SKILL.md) — règles de calcul des points
-- [`42api-fetch`](./skills/42api-fetch/SKILL.md) — appels API 42 avec rate limit
-- [`supabase-table-create`](./skills/supabase-table-create/SKILL.md) — création de tables (RLS systématique)
+```bash
+npm test && npm run typecheck && npm run lint
+```
 
-## License
+- **Conventions de code et d'architecture** : [`AGENTS.md`](./AGENTS.md) (lu aussi
+  par les agents IA) et les [`skills/`](./skills/README.md) — notamment SOLID,
+  le wrapper API 42 rate-limité, et la RLS Supabase systématique.
+- **Format des commits** : [`conventional-commits`](./skills/conventional-commits/SKILL.md).
+- **Checklist PR** : [`pr-template`](./skills/pr-template/SKILL.md) +
+  [`.github/pull_request_template.md`](./.github/pull_request_template.md).
 
-Non défini pour l'instant — usage interne 42 Lausanne.
+Tu rejoins le projet ? Commence par [`docs/README.md`](./docs/README.md), qui donne
+l'ordre de lecture.
+
+## 📄 Licence
+
+Distribué sous licence **MIT** — voir [`LICENSE`](./LICENSE). Tu peux réutiliser,
+forker et adapter 42Bet librement, y compris pour un autre campus 42.
+
+## 🙌 Remerciements
+
+- L'**[API 42](https://api.intra.42.fr/apidoc)** pour l'auth et les coalitions.
+- **[football-data.org](https://www.football-data.org/)** pour les fixtures et scores.
+- Construit avec [Next.js](https://nextjs.org/), [Supabase](https://supabase.com/)
+  et [Vercel](https://vercel.com/).
+
+---
+
+<div align="center">
+Fait avec ❤️ à l'École 42 Lausanne — sans argent réel, juste pour le fun.
+</div>
