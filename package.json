@@ -2,6 +2,13 @@
   "name": "42bet",
   "version": "0.1.0",
   "private": true,
+  "description": "Web app de pronostics foot sans argent réel pour les étudiants de l'École 42 Lausanne (Coupe du Monde + Piscine 42).",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FiTcHeRs71/42bet.git"
+  },
+  "homepage": "https://42bet.vercel.app",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
