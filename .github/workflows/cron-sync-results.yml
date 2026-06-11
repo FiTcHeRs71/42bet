@@ -1,21 +1,23 @@
 name: cron-sync-results
 
-# Déclenche le scoring 42Bet toutes les 5 min.
-# Le plan Vercel Hobby ne permet que des crons quotidiens : on externalise
-# donc ce tick fréquent ici. L'endpoint reste protégé par CRON_SECRET
-# (cf. src/app/api/cron/sync-results/route.ts — header Authorization: Bearer).
+# Déclenche le scoring 42Bet (endpoint /api/cron/sync-results, protégé par
+# CRON_SECRET — cf. src/app/api/cron/sync-results/route.ts, header Bearer).
+#
+# ⚠️ Le `schedule` GitHub Actions a été RETIRÉ : en pratique le scheduler
+# Actions est fortement throttlé (best-effort, trous de plusieurs heures
+# observés en prod), ce qui retardait le scoring après la fin d'un match.
+# Le tick périodique fiable est désormais assuré par un pinger externe
+# (cron-job.org, toutes les 2 min) — cf. docs/deploy.md §5.3.
+#
+# Ce workflow reste comme FILET MANUEL : déclenchable à la main via l'onglet
+# Actions (workflow_dispatch) pour forcer un scoring immédiat si besoin.
 #
 # Secrets repo requis (Settings → Secrets and variables → Actions) :
 #   PROD_URL     ex. https://42bet.vercel.app  (sans slash final)
 #   CRON_SECRET  même valeur que la var d'env Vercel Production
-#
-# Note : le scheduler GitHub Actions n'est pas garanti à la minute près
-# (best-effort, parfois quelques minutes de retard). Suffisant pour l'alpha.
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"
-  workflow_dispatch: {} # permet un déclenchement manuel depuis l'onglet Actions
+  workflow_dispatch: {} # déclenchement manuel uniquement (filet de secours)
 
 concurrency:
   group: cron-sync-results

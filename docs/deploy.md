@@ -162,15 +162,26 @@ déclencheurs (cf. `docs/architecture.md` §3) :
 
 - **`sync-matches`** (ingestion fixtures CM) → cron **Vercel** quotidien, déclaré
   dans [`../vercel.json`](../vercel.json) (`0 4 * * *`).
-- **`sync-results`** (scoring `*/5`) → **externalisé sur GitHub Actions**
-  (`.github/workflows/cron-sync-results.yml`). Best-effort (le scheduler Actions
-  peut avoir quelques min de retard), suffisant pour l'alpha.
+- **`sync-results`** (scoring) → **pinger externe cron-job.org**, toutes les
+  2 min. Le `schedule` GitHub Actions a été abandonné : son scheduler est trop
+  throttlé (trous de plusieurs heures observés en prod → scoring en retard après
+  la fin d'un match). Le tick est quasi-gratuit hors match (l'endpoint ne touche
+  football-data.org que si un match est dans la fenêtre de résultat), donc un
+  ping toutes les 2 min 24/7 est sans risque (free tier 10 req/min).
+
+  > Le workflow `.github/workflows/cron-sync-results.yml` est conservé en
+  > **filet manuel** (`workflow_dispatch`) : forcer un scoring immédiat depuis
+  > l'onglet Actions. Le scoring est idempotent, le double-tick est sans danger.
 
 - [ ] Vérifier que `CRON_SECRET` est bien présent dans les env vars Vercel —
       les routes renvoient `401` sans lui (AGENTS §5.8).
-- [ ] Côté GitHub (Settings → Secrets and variables → Actions), ajouter les
-      secrets repo **`PROD_URL`** (ex. `https://42bet.vercel.app`, sans slash
-      final) et **`CRON_SECRET`** (même valeur que la var Vercel Production).
+- [ ] **cron-job.org** : créer un cronjob → URL
+      `https://<prod>/api/cron/sync-results`, intervalle **2 min**, onglet
+      *Advanced* → header `Authorization` = `Bearer <CRON_SECRET>` (même valeur
+      que la var Vercel Production). Activer « notify on failure ».
+- [ ] (Filet manuel) Côté GitHub (Settings → Secrets and variables → Actions),
+      garder les secrets repo **`PROD_URL`** (ex. `https://42bet.vercel.app`,
+      sans slash final) et **`CRON_SECRET`** pour le `workflow_dispatch`.
 
 ### 5.4 Après déploiement
 
@@ -215,10 +226,12 @@ Sur https://profile.intra.42.fr/oauth/applications, ajouter la redirect URI :
 - **Vercel** : `vercel.json` déclare le cron quotidien `sync-matches`. Vercel
   envoie `Authorization: Bearer <CRON_SECRET>` — rien à configurer hormis la
   variable `CRON_SECRET` en Production.
-- **GitHub Actions** : le scoring `*/5` (`sync-results`) tourne dans
-  `.github/workflows/cron-sync-results.yml`. Ajouter les secrets repo `PROD_URL`
-  et `CRON_SECRET` (cf. §5.3). Déclenchable à la main via l'onglet **Actions**
-  (`workflow_dispatch`).
+- **cron-job.org** : le scoring (`sync-results`) est pingé toutes les 2 min par
+  un cronjob externe (cf. §5.3 pour le setup : URL + header Bearer). Le scheduler
+  GitHub Actions n'est plus utilisé pour le tick (trop throttlé).
+- **GitHub Actions** : `.github/workflows/cron-sync-results.yml` reste en filet
+  manuel (`workflow_dispatch`) — forcer un scoring depuis l'onglet **Actions**.
+  Garder les secrets repo `PROD_URL` et `CRON_SECRET`.
 
 ### 4.5 Smoke test post-déploiement
 - Login OAuth avec un compte campus 47 → accès accordé.
