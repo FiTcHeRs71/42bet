@@ -9,7 +9,7 @@
 **42Bet** — web app de pronostics foot **sans argent réel** pour les étudiants et piscineux de l'**École 42 Lausanne**, à l'occasion de la Coupe du Monde + nouvelle Piscine 42.
 
 - Projet **en binôme** (full-stack) — deux contributeurs
-- Statut : **MVP complet + bonus livrés**, pas encore déployé
+- Statut : **alpha déployée sur Vercel** (login réservé au campus 47 Lausanne) — MVP complet + bonus livrés. Prép lancement réel en cours (reset des données alpha avant la CM)
 - Source de vérité métier : [`brainstorming.md`](./brainstorming.md) *(spec d'origine, rédigée pour un duo)*
 
 ## 2. Stack (versions exactes)

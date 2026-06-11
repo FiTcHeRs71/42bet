@@ -61,3 +61,6 @@ supabase/.temp
 
 # Superpowers brainstorm visual companion (local, non versionné)
 .superpowers/
+
+# Backups produits par scripts/reset-play-data.ts (jamais committés)
+/backups/

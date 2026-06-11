@@ -1,7 +1,7 @@
 # Handoff / reprise de session — 42Bet
 
 > Doc de **reprise de travail** (notamment pour changer de machine). Mis à jour à
-> la fin d'une session. Dernière maj : **2026-06-09**.
+> la fin d'une session. Dernière maj : **2026-06-10**.
 >
 > Pour le setup d'une nouvelle machine (clone, `.env.local`, plugins/skills
 > Claude Code) → voir [`deploy.md`](./deploy.md) §1.
@@ -15,10 +15,47 @@
 
 ---
 
-## 0. État courant — ALPHA DÉPLOYÉE (2026-06-09)
+## 0. État courant — PRÉP LANCEMENT RÉEL (2026-06-10)
 
 > Section de tête : l'état **vrai** aujourd'hui. Les sections numérotées plus bas
 > (1, 1bis, 1ter…) sont l'historique des chantiers, conservé tel quel.
+
+### 0a. Prép lancement réel — 2 PR ouvertes (2026-06-10)
+
+Objectif : repartir d'une **base propre** pour la Coupe du Monde. Deux volets
+indépendants, **PR ouvertes, pas encore mergées** (on s'en occupe plus tard).
+Spec : `docs/superpowers/specs/2026-06-10-prep-lancement-reel-design.md` ·
+Plan : `docs/superpowers/plans/2026-06-10-prep-lancement-reel.md`.
+
+- **Volet 1 — retrait de l'exception coalition chefs de piscine**
+  (branche `chore/remove-coalition-exception`, **PR #15**). Revert de la feature
+  alpha-only `PISCINE_CHEFS` : `pickUserCoalition` ne prend plus de `login`, plus
+  de branche chef, tests d'exception retirés des 2 suites. **À merger + déployer
+  AVANT le reset** (sinon un re-login d'un chef le re-classerait sur sa piscine).
+  À la prochaine connexion : `ludebarn`/`jturrel` → House of Cores,
+  `sweinber` → House of Processes.
+- **Volet 2 — script de reset + docs** (branche `chore/prep-lancement-reel`,
+  **PR #16**). `scripts/reset-play-data.ts` (`npm run reset-play-data`) :
+  **dry-run par défaut**, backup JSON horodaté dans `backups/` (gitignored),
+  garde-fou `-- --yes`. Wipe `matches` (paris en cascade) + `total_points = 0` +
+  reclassement cursus des 3 testeurs. N'affecte pas l'app (script non importé).
+  Dry-run validé contre la prod : **107 matchs, 39 paris** détectés, 0 écriture.
+
+**Reste à faire (manuel, dans l'ordre)** : (1) relire + merger **PR #15**, attendre
+le **déploiement** ; (2) relire + merger **PR #16** ; (3) **à la fin de l'alpha**,
+lancer `npm run reset-play-data -- --yes`.
+
+### 0b. Lisibilité mobile leaderboard + chefs de piscine (PR #11–#14, mergées)
+
+- **PR #11/#12** — ligne joueur lisible en mobile (badge coalition logo-seul,
+  photo cliquable, badge responsive + cibles tactiles 44px).
+- **PR #13/#14** — classement des **chefs de piscine** dans leur coalition de
+  piscine (via le groupe coalition renvoyé par l'API, pas un `ft_id` en dur).
+  ⚠️ **Exception en cours de retrait** par le Volet 1 ci-dessus (PR #15).
+
+---
+
+### État alpha déployée (2026-06-09) — toujours valable
 
 - ✅ **Alpha déployée sur Vercel** depuis `main` (dernier commit `cbbe02f`,
   *chore: trigger prod redeploy*). Login réservé au campus **47** (Lausanne).
