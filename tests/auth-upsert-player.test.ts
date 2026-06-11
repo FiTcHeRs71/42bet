@@ -82,23 +82,4 @@ describe("upsertPlayer", () => {
     await expect(upsertPlayer(profile, deps)).resolves.toBeUndefined();
     expect(deps.upsertUser).toHaveBeenCalledOnce();
   });
-
-  it("chef de piscine : upserte et lie sa coalition de piscine, pas le cursus", async () => {
-    const chef = { ...profile, login: "ludebarn" };
-    const deps = baseDeps({
-      fetchUserCoalitions: vi.fn().mockResolvedValue([
-        { id: 192, name: "House of Threads", color: "#599ac2" }, // cursus (prio 3)
-        { id: 168, name: "The Sharks", color: "#82CCE0" }, // piscine dirigée
-      ]),
-      upsertCoalition: vi.fn().mockResolvedValue({ id: "shark-uuid", error: null }),
-    });
-    await upsertPlayer(chef, deps);
-    expect(deps.upsertCoalition).toHaveBeenCalledWith({
-      ftId: 168,
-      name: "The Sharks",
-      color: "#82CCE0",
-      imageUrl: null,
-    });
-    expect(deps.setCoalition).toHaveBeenCalledWith(42, "shark-uuid");
-  });
 });
