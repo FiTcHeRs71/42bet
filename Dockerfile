@@ -20,6 +20,19 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# `next build` charge les modules serveur (clients Supabase, config NextAuth) qui
+# valident la présence de ces secrets au niveau module. Vercel a ces variables
+# dans l'env de build ; ici on fournit des PLACEHOLDERS pour passer le build.
+# Ils ne sont PAS inlinés (préfixe non NEXT_PUBLIC_) et ce stage `builder` est
+# jeté en multi-stage : aucune de ces valeurs n'atteint l'image finale. Les
+# vraies valeurs sont injectées au RUNTIME via .env.docker.
+ENV SUPABASE_SERVICE_ROLE_KEY=build-placeholder
+ENV AUTH_SECRET=build-placeholder
+ENV FT_API_UID=build-placeholder
+ENV FT_API_SECRET=build-placeholder
+ENV FT_API_CAMPUS_ID=47
+ENV FOOTBALL_DATA_API_KEY=build-placeholder
+
 RUN npm run build
 
 # ---- Stage 3: runner ----
