@@ -1,0 +1,29 @@
+# Dépendances et artefacts reconstruits dans l'image
+node_modules
+.next
+out
+dist
+
+# Secrets — JAMAIS dans le contexte de build
+.env
+.env.*
+*.env
+
+# Git & CI
+.git
+.github
+.gitignore
+
+# Dev / éditeur / docs non nécessaires au runtime
+.vscode
+.idea
+*.log
+coverage
+.superpowers
+README.md
+docs
+brainstorming.md
+skills
+tests
+supabase
+scripts
