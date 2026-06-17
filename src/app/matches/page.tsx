@@ -1,6 +1,6 @@
 // src/app/matches/page.tsx
 import { MatchRow } from "@/components/match-row";
-import { auth } from "@/lib/auth/config";
+import { requireSession } from "@/lib/auth/require-session";
 import { listMyBets } from "@/lib/bets";
 import { listMatches } from "@/lib/matches";
 import { displayState, groupByDay } from "@/lib/match-view";
@@ -19,7 +19,7 @@ const DAY_FMT = new Intl.DateTimeFormat("fr-FR", {
 });
 
 export default async function MatchesPage() {
-  const [matches, session] = await Promise.all([listMatches(), auth()]);
+  const [matches, session] = await Promise.all([listMatches(), requireSession()]);
 
   // Pronos du joueur connecté, indexés par match_id (lecture privée après auth()).
   const betsByMatch = new Map<string, Bet>();

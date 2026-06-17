@@ -12,6 +12,7 @@ import {
   type ProfileOutcome,
 } from "@/lib/profile";
 import { listPlayers } from "@/lib/users";
+import { requireSession } from "@/lib/auth/require-session";
 
 // Les points + rang évoluent après chaque match : rendu jamais figé.
 export const dynamic = "force-dynamic";
@@ -36,6 +37,7 @@ export default async function ProfilePage({
   params: Promise<{ login: string }>;
 }) {
   const { login } = await params;
+  await requireSession();
 
   const [players, allBets] = await Promise.all([listPlayers(), listAllBets()]);
   const player = players.find((p) => p.login === login);
