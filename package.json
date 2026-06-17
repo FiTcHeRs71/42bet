@@ -4,6 +4,7 @@
   "private": true,
   "description": "Web app de pronostics foot sans argent réel pour les étudiants de l'École 42 Lausanne (Coupe du Monde + Piscine 42).",
   "license": "MIT",
+  "author": "Frederic DUCROT",
   "repository": {
     "type": "git",
     "url": "https://github.com/FiTcHeRs71/42bet.git"
