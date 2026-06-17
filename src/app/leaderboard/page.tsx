@@ -14,6 +14,7 @@ import {
   type LeaderboardEntry,
 } from "@/lib/leaderboard";
 import { listPlayers } from "@/lib/users";
+import { requireSession } from "@/lib/auth/require-session";
 
 // Les points évoluent après chaque match : le rendu ne doit pas être figé.
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ function inGroup(e: LeaderboardEntry, group: "cursus" | "piscine"): boolean {
 }
 
 export default async function LeaderboardPage() {
+  await requireSession();
   const [players, bets] = await Promise.all([listPlayers(), listAllBets()]);
   const entries = buildLeaderboard(players, bets);
 

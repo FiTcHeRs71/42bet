@@ -1,7 +1,7 @@
 // src/app/page.tsx
 import Link from "next/link";
 
-import { auth } from "@/lib/auth/config";
+import { requireSession } from "@/lib/auth/require-session";
 import { listMatches } from "@/lib/matches";
 import { displayState } from "@/lib/match-view";
 import { listAllBets } from "@/lib/bets";
@@ -22,7 +22,7 @@ const TIME_FMT = new Intl.DateTimeFormat("fr-FR", {
 export default async function Home() {
   const now = new Date();
   const [session, matches, players, bets] = await Promise.all([
-    auth(),
+    requireSession(),
     listMatches(),
     listPlayers(),
     listAllBets(),
@@ -32,7 +32,7 @@ export default async function Home() {
     .filter((m) => displayState(m, now) === "upcoming")
     .slice(0, 3);
   const top3 = buildLeaderboard(players, bets).slice(0, 3);
-  const login = session?.user?.login ?? null;
+  const login = session.user.login;
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 p-6">
@@ -43,15 +43,9 @@ export default async function Home() {
         <p className="mt-2 text-zinc-400">
           Pronostics Coupe du Monde — École 42 Lausanne
         </p>
-        {login ? (
-          <p className="mt-3">
-            Salut <strong>{login}</strong> 👋
-          </p>
-        ) : (
-          <p className="mt-3 text-zinc-300">
-            Connecte-toi avec ton compte 42 pour parier.
-          </p>
-        )}
+        <p className="mt-3">
+          Salut <strong>{login}</strong> 👋
+        </p>
       </section>
 
       <div className="grid gap-6 sm:grid-cols-2">
