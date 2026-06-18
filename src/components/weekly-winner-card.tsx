@@ -26,12 +26,12 @@ export function WeeklyWinnerCard({ winner }: { winner: WeeklyEntry | null }) {
             )}
             <span className="min-w-0 flex-1 truncate font-bold">{winner.login}</span>
             <span className="shrink-0 font-semibold tabular-nums text-accent">
-              {winner.weeklyPoints} pts
+              {winner.weeklyPoints} pts cette semaine
             </span>
           </div>
         ) : (
           <p className="mt-1 text-sm text-zinc-300">
-            Pas encore de gagnant cette semaine
+            Pas encore de gagnant cette semaine 🍺
           </p>
         )}
       </div>
