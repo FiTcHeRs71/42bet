@@ -7,10 +7,12 @@ import {
   buildCoalitionLeaderboard,
   buildLeaderboard,
   buildProfileRanks,
+  buildWeeklyLeaderboard,
   type CampStanding,
   type LeaderboardBet,
   type LeaderboardEntry,
   type LeaderboardPlayer,
+  type WeeklyBet,
 } from "../src/lib/leaderboard";
 import { coalitionGroupOf } from "../src/lib/coalitions";
 
@@ -339,5 +341,73 @@ describe("buildProfileRanks", () => {
     expect(r.general).toBeNull();
     expect(r.camp).toBeNull();
     expect(r.coalition).toBeNull();
+  });
+});
+
+describe("buildWeeklyLeaderboard", () => {
+  const WIN = {
+    start: new Date("2026-06-18T22:00:00Z"), // vendredi 19/06 00:00 Zurich
+    end: new Date("2026-06-25T22:00:00Z"), // vendredi 26/06 00:00 Zurich
+  };
+  // Un kickoff dans la fenêtre et un hors fenêtre.
+  const IN = "2026-06-20T18:00:00Z";
+  const OUT = "2026-06-10T18:00:00Z";
+
+  test("aucun pari → []", () => {
+    expect(buildWeeklyLeaderboard([], [player("u1", "alice")], WIN)).toEqual([]);
+  });
+
+  test("somme les points de la fenêtre, ignore le hors-fenêtre", () => {
+    const players = [player("u1", "alice"), player("u2", "bob")];
+    const bets: WeeklyBet[] = [
+      { user_id: "u1", points_awarded: 3, kickoff_at: IN },
+      { user_id: "u1", points_awarded: 1, kickoff_at: IN },
+      { user_id: "u1", points_awarded: 3, kickoff_at: OUT }, // ignoré
+      { user_id: "u2", points_awarded: 1, kickoff_at: IN },
+    ];
+    const res = buildWeeklyLeaderboard(bets, players, WIN);
+    expect(res.map((e) => [e.login, e.weeklyPoints, e.rank])).toEqual([
+      ["alice", 4, 1],
+      ["bob", 1, 2],
+    ]);
+  });
+
+  test("exclut les joueurs à 0 pt sur la semaine", () => {
+    const players = [player("u1", "alice"), player("u2", "bob")];
+    const bets: WeeklyBet[] = [
+      { user_id: "u1", points_awarded: 3, kickoff_at: IN },
+      { user_id: "u2", points_awarded: 0, kickoff_at: IN }, // a parié, rien gagné
+    ];
+    const res = buildWeeklyLeaderboard(bets, players, WIN);
+    expect(res.map((e) => e.login)).toEqual(["alice"]);
+  });
+
+  test("égalité → rang standard (1,1,3) + départage par login", () => {
+    const players = [
+      player("u1", "alice"),
+      player("u2", "bob"),
+      player("u3", "carol"),
+    ];
+    const bets: WeeklyBet[] = [
+      { user_id: "u1", points_awarded: 3, kickoff_at: IN },
+      { user_id: "u2", points_awarded: 3, kickoff_at: IN },
+      { user_id: "u3", points_awarded: 1, kickoff_at: IN },
+    ];
+    const res = buildWeeklyLeaderboard(bets, players, WIN);
+    expect(res.map((e) => [e.login, e.rank])).toEqual([
+      ["alice", 1],
+      ["bob", 1],
+      ["carol", 3],
+    ]);
+  });
+
+  test("user_id sans joueur correspondant → ignoré", () => {
+    const players = [player("u1", "alice")];
+    const bets: WeeklyBet[] = [
+      { user_id: "u1", points_awarded: 1, kickoff_at: IN },
+      { user_id: "ghost", points_awarded: 3, kickoff_at: IN },
+    ];
+    const res = buildWeeklyLeaderboard(bets, players, WIN);
+    expect(res.map((e) => e.login)).toEqual(["alice"]);
   });
 });

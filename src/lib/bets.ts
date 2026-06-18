@@ -4,7 +4,7 @@
 // bets a une RLS default-deny, donc tout passe par le serveur après auth().
 
 import { supabaseAdmin } from "@/lib/supabase/server";
-import type { LeaderboardBet } from "@/lib/leaderboard";
+import type { LeaderboardBet, WeeklyBet } from "@/lib/leaderboard";
 import type { ProfileBetRow } from "@/lib/profile";
 import type { Bet } from "@/lib/types";
 
@@ -88,5 +88,34 @@ export async function listBetsWithMatchByUser(
       points_awarded: row.points_awarded,
       match: Array.isArray(m) ? (m[0] ?? null) : m,
     };
+  });
+}
+
+/**
+ * Paris NOTÉS (points_awarded non null) joints à la date de coup d'envoi de leur
+ * match, pour le classement "meilleur de la semaine". Lecture server-only via
+ * service_role (bets = RLS default-deny). Normalise le match imbriqué en
+ * objet|null (supabase-js peut le typer objet OU tableau selon la relation).
+ */
+export async function listScoredBetsWithKickoff(): Promise<WeeklyBet[]> {
+  const { data, error } = await supabaseAdmin
+    .from("bets")
+    .select("user_id, points_awarded, match:matches(kickoff_at)")
+    .not("points_awarded", "is", null);
+
+  if (error) throw new Error(`listScoredBetsWithKickoff: ${error.message}`);
+
+  return (data ?? []).flatMap((row) => {
+    const m = row.match as { kickoff_at: string } | { kickoff_at: string }[] | null;
+    const match = Array.isArray(m) ? (m[0] ?? null) : m;
+    // points_awarded est non null (filtré ci-dessus) ; match non null (FK not null).
+    if (match === null || row.points_awarded === null) return [];
+    return [
+      {
+        user_id: row.user_id,
+        points_awarded: row.points_awarded,
+        kickoff_at: match.kickoff_at,
+      },
+    ];
   });
 }
