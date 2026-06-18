@@ -283,3 +283,68 @@ export function buildProfileRanks(
 
   return { general, camp, coalition };
 }
+
+export type WeeklyBet = {
+  user_id: string;
+  points_awarded: number;
+  kickoff_at: string;
+};
+
+export type WeeklyEntry = {
+  rank: number;
+  login: string;
+  avatarUrl: string | null;
+  coalition: LeaderboardCoalition | null;
+  weeklyPoints: number;
+};
+
+/**
+ * Classement "meilleur de la semaine" : somme des points DÉJÀ attribués
+ * (points_awarded) des paris dont le match (kickoff_at) tombe dans `window`
+ * = [start, end). Aucun recalcul de points (rule #7). Exclut les joueurs à 0 pt
+ * sur la semaine et les user_id sans joueur correspondant. Tri points hebdo
+ * décroissants puis login ; rang standard (1,1,3).
+ */
+export function buildWeeklyLeaderboard(
+  weeklyBets: WeeklyBet[],
+  players: LeaderboardPlayer[],
+  weekWindow: { start: Date; end: Date },
+): WeeklyEntry[] {
+  const startMs = weekWindow.start.getTime();
+  const endMs = weekWindow.end.getTime();
+
+  // 1. Somme des points par joueur, restreinte à la fenêtre.
+  const pointsByUser = new Map<string, number>();
+  for (const b of weeklyBets) {
+    const t = new Date(b.kickoff_at).getTime();
+    if (t < startMs || t >= endMs) continue;
+    pointsByUser.set(b.user_id, (pointsByUser.get(b.user_id) ?? 0) + b.points_awarded);
+  }
+
+  // 2. Joindre aux joueurs ; exclure 0 pt et user_id inconnu.
+  const aggregated = players
+    .map((p) => ({ p, weeklyPoints: pointsByUser.get(p.id) ?? 0 }))
+    .filter((x) => x.weeklyPoints > 0)
+    .map(({ p, weeklyPoints }) => ({
+      login: p.login,
+      avatarUrl: p.avatar_url,
+      coalition: p.coalition,
+      weeklyPoints,
+    }));
+
+  // 3. Tri : points hebdo décroissants, puis login croissant (déterministe).
+  aggregated.sort(
+    (a, b) => b.weeklyPoints - a.weeklyPoints || a.login.localeCompare(b.login),
+  );
+
+  // 4. Rang standard (1,1,3) — même schéma que buildCoalitionLeaderboard.
+  let lastPoints: number | null = null;
+  let lastRank = 0;
+  return aggregated.map((entry, index) => {
+    const rank =
+      lastPoints !== null && entry.weeklyPoints === lastPoints ? lastRank : index + 1;
+    lastPoints = entry.weeklyPoints;
+    lastRank = rank;
+    return { rank, ...entry };
+  });
+}
