@@ -5,16 +5,19 @@ import {
   type CoalitionViews,
   type PlayerViews,
 } from "@/components/leaderboard-tabs";
-import { listAllBets } from "@/lib/bets";
+import { listAllBets, listScoredBetsWithKickoff } from "@/lib/bets";
 import {
   assignRanks,
   buildCampStandings,
   buildCoalitionLeaderboard,
   buildLeaderboard,
+  buildWeeklyLeaderboard,
   type LeaderboardEntry,
 } from "@/lib/leaderboard";
 import { listPlayers } from "@/lib/users";
 import { requireSession } from "@/lib/auth/require-session";
+import { currentWeekWindow } from "@/lib/week";
+import { WeeklyWinnerCard } from "@/components/weekly-winner-card";
 
 // Les points évoluent après chaque match : le rendu ne doit pas être figé.
 export const dynamic = "force-dynamic";
@@ -25,8 +28,16 @@ function inGroup(e: LeaderboardEntry, group: "cursus" | "piscine"): boolean {
 
 export default async function LeaderboardPage() {
   await requireSession();
-  const [players, bets] = await Promise.all([listPlayers(), listAllBets()]);
+  const now = new Date();
+  const week = currentWeekWindow(now);
+  const [players, bets, weeklyBets] = await Promise.all([
+    listPlayers(),
+    listAllBets(),
+    listScoredBetsWithKickoff(),
+  ]);
   const entries = buildLeaderboard(players, bets);
+  const weekly = buildWeeklyLeaderboard(weeklyBets, players, week);
+  const winner = weekly[0] ?? null;
 
   const cursusEntries = entries.filter((e) => inGroup(e, "cursus"));
   const piscineEntries = entries.filter((e) => inGroup(e, "piscine"));
@@ -50,12 +61,15 @@ export default async function LeaderboardPage() {
       {entries.length === 0 ? (
         <p className="text-zinc-400">Aucun pronostic pour l&apos;instant.</p>
       ) : (
-        <LeaderboardTabs
-          coalitions={coalitions}
-          camps={camps}
-          players={playerViews}
-          weekly={[]}
-        />
+        <>
+          <WeeklyWinnerCard winner={winner} />
+          <LeaderboardTabs
+            coalitions={coalitions}
+            camps={camps}
+            players={playerViews}
+            weekly={weekly}
+          />
+        </>
       )}
     </main>
   );
