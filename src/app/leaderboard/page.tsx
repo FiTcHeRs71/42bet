@@ -54,6 +54,7 @@ export default async function LeaderboardPage() {
           coalitions={coalitions}
           camps={camps}
           players={playerViews}
+          weekly={[]}
         />
       )}
     </main>

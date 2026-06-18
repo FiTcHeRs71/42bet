@@ -11,6 +11,7 @@ import type {
   CampStanding,
   CoalitionStanding,
   LeaderboardEntry,
+  WeeklyEntry,
 } from "@/lib/leaderboard";
 
 const PCT_FMT = new Intl.NumberFormat("fr-FR", {
@@ -30,7 +31,7 @@ export type PlayerViews = {
   piscineux: LeaderboardEntry[];
 };
 
-type Tab = "coalitions" | "players";
+type Tab = "coalitions" | "players" | "weekly";
 type CoalitionFilter = "all" | "cursus" | "piscine";
 type PlayerFilter = "all" | "students" | "piscineux";
 
@@ -79,12 +80,14 @@ export function LeaderboardTabs({
   coalitions,
   camps,
   players,
+  weekly,
 }: {
   coalitions: CoalitionViews;
   camps: CampStanding[];
   players: PlayerViews;
+  weekly: WeeklyEntry[];
 }) {
-  const [tab, setTab] = useState<Tab>("coalitions");
+  const [tab, setTab] = useState<Tab>("players");
   const [coalitionFilter, setCoalitionFilter] = useState<CoalitionFilter>("all");
   const [playerFilter, setPlayerFilter] = useState<PlayerFilter>("all");
 
@@ -95,14 +98,15 @@ export function LeaderboardTabs({
     <>
       <Segmented<Tab>
         options={[
-          { key: "coalitions", label: "Coalitions" },
           { key: "players", label: "Joueurs" },
+          { key: "coalitions", label: "Coalitions" },
+          { key: "weekly", label: "Semaine" },
         ]}
         value={tab}
         onChange={setTab}
       />
 
-      {tab === "coalitions" ? (
+      {tab === "coalitions" && (
         <section>
           <Segmented<CoalitionFilter>
             options={COALITION_FILTERS}
@@ -137,7 +141,9 @@ export function LeaderboardTabs({
             </ul>
           )}
         </section>
-      ) : (
+      )}
+
+      {tab === "players" && (
         <section>
           {camps.length > 0 && (
             <div className="mb-4 grid grid-cols-2 gap-3">
@@ -222,6 +228,62 @@ export function LeaderboardTabs({
                   </span>
                   <span className="w-12 shrink-0 text-right font-semibold tabular-nums">
                     {e.points} pt
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
+      {tab === "weekly" && (
+        <section>
+          {weekly.length === 0 ? (
+            <p className="text-zinc-400">Aucun joueur classé cette semaine.</p>
+          ) : (
+            <ul className="glass divide-y divide-white/5 overflow-hidden">
+              {weekly.map((e) => (
+                <li
+                  key={e.login}
+                  className="flex items-center gap-3 px-4 py-3 text-sm"
+                >
+                  <span
+                    className={`w-6 shrink-0 text-center font-bold tabular-nums ${
+                      e.rank <= 3 ? "text-accent" : "text-zinc-400"
+                    }`}
+                  >
+                    {e.rank}
+                  </span>
+                  <Link
+                    href={`/profile/${e.login}`}
+                    aria-label={`Profil de ${e.login}`}
+                    className="shrink-0 rounded-full ring-white/0 transition-shadow hover:ring-2 hover:ring-accent/60"
+                  >
+                    {e.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={e.avatarUrl}
+                        alt=""
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="block h-8 w-8 rounded-full bg-white/10" />
+                    )}
+                  </Link>
+                  <Link
+                    href={`/profile/${e.login}`}
+                    className="min-w-0 flex-1 truncate font-medium transition-colors hover:text-accent"
+                  >
+                    {e.login}
+                  </Link>
+                  <span className="sm:hidden">
+                    <CoalitionBadge coalition={e.coalition} size="sm" showLabel={false} />
+                  </span>
+                  <span className="hidden sm:inline-flex">
+                    <CoalitionBadge coalition={e.coalition} size="sm" />
+                  </span>
+                  <span className="w-14 shrink-0 text-right font-semibold tabular-nums">
+                    {e.weeklyPoints} pt
                   </span>
                 </li>
               ))}
