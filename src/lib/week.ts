@@ -1,9 +1,10 @@
-// Fenêtre hebdomadaire "vendredi → vendredi" en Europe/Zurich (DST-correct).
-// Pur : aucune I/O. La semaine court du dernier vendredi 00h00 (Zurich) au
-// vendredi suivant 00h00. Sert au classement "meilleur de la semaine".
+// Fenêtre hebdomadaire "samedi → samedi" en Europe/Zurich (DST-correct).
+// Pur : aucune I/O. La semaine court du dernier samedi 00h00 (Zurich) au
+// samedi suivant 00h00 — soit du samedi 00h01 au vendredi 23h59. Sert au
+// classement "meilleur de la semaine" et au "pari le plus loufoque".
 
 const TZ = "Europe/Zurich";
-const FRIDAY = 5; // getUTCDay(): 0=dimanche .. 6=samedi
+const SATURDAY = 6; // getUTCDay(): 0=dimanche .. 6=samedi
 
 /** Décalage (ms) du fuseau Zurich à l'instant `date` (positif à l'est de UTC). */
 function tzOffsetMs(date: Date): number {
@@ -39,26 +40,26 @@ function zurichMidnight(y: number, m: number, d: number): Date {
   return new Date(Date.UTC(y, m - 1, d, 0, 0, 0) - tzOffsetMs(noonGuess));
 }
 
-/** Fenêtre [start, end) de la semaine courante : vendredi 00h00 → vendredi 00h00. */
+/** Fenêtre [start, end) de la semaine courante : samedi 00h00 → samedi 00h00. */
 export function currentWeekWindow(now: Date): { start: Date; end: Date } {
   const { y, m, d } = zurichYMD(now);
   const weekday = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
-  const daysSinceFriday = (weekday - FRIDAY + 7) % 7;
+  const daysSinceSaturday = (weekday - SATURDAY + 7) % 7;
 
-  const fri = new Date(Date.UTC(y, m - 1, d - daysSinceFriday));
+  const sat = new Date(Date.UTC(y, m - 1, d - daysSinceSaturday));
   const start = zurichMidnight(
-    fri.getUTCFullYear(),
-    fri.getUTCMonth() + 1,
-    fri.getUTCDate(),
+    sat.getUTCFullYear(),
+    sat.getUTCMonth() + 1,
+    sat.getUTCDate(),
   );
 
-  const nextFri = new Date(
-    Date.UTC(fri.getUTCFullYear(), fri.getUTCMonth(), fri.getUTCDate() + 7),
+  const nextSat = new Date(
+    Date.UTC(sat.getUTCFullYear(), sat.getUTCMonth(), sat.getUTCDate() + 7),
   );
   const end = zurichMidnight(
-    nextFri.getUTCFullYear(),
-    nextFri.getUTCMonth() + 1,
-    nextFri.getUTCDate(),
+    nextSat.getUTCFullYear(),
+    nextSat.getUTCMonth() + 1,
+    nextSat.getUTCDate(),
   );
 
   return { start, end };
