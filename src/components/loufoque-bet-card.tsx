@@ -13,11 +13,11 @@ export function LoufoqueBetCard({
   return (
     <section className="glass rise mb-4 flex items-center gap-4 p-4">
       <span className="text-3xl" aria-hidden>
-        🃏
+        🎯
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-          Pari loufoque de la semaine
+          Sniper de la semaine
         </p>
         {loufoque ? (
           <div className="mt-1 flex flex-col gap-1">
@@ -59,7 +59,7 @@ export function LoufoqueBetCard({
           </div>
         ) : (
           <p className="mt-1 text-sm text-zinc-300">
-            Pas encore de pari loufoque cette semaine 🃏
+            Pas encore de sniper cette semaine 🎯
           </p>
         )}
       </div>
