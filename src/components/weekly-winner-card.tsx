@@ -1,4 +1,4 @@
-// Carte mise en avant du meilleur joueur de la semaine (vendredi→vendredi).
+// Carte mise en avant du meilleur joueur de la semaine (samedi→samedi).
 // Server component, sans état. Reçoit le gagnant calculé côté page (ou null).
 import type { WeeklyEntry } from "@/lib/leaderboard";
 
