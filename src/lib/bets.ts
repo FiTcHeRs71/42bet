@@ -5,6 +5,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase/server";
 import type { LeaderboardBet, WeeklyBet } from "@/lib/leaderboard";
+import type { LoufoqueBet } from "@/lib/loufoque";
 import type { ProfileBetRow } from "@/lib/profile";
 import type { Bet } from "@/lib/types";
 
@@ -115,6 +116,52 @@ export async function listScoredBetsWithKickoff(): Promise<WeeklyBet[]> {
         user_id: row.user_id,
         points_awarded: row.points_awarded,
         kickoff_at: match.kickoff_at,
+      },
+    ];
+  });
+}
+
+/**
+ * Paris ayant trouvé le SCORE EXACT (points_awarded = 3) joints à leur match
+ * (équipes, score réel, kickoff), pour le "pari le plus loufoque de la semaine".
+ * Lecture server-only via service_role (bets = RLS default-deny). Normalise le
+ * match imbriqué en objet|null (supabase-js peut le typer objet OU tableau).
+ */
+export async function listExactScoreBetsWithMatch(): Promise<LoufoqueBet[]> {
+  const { data, error } = await supabaseAdmin
+    .from("bets")
+    .select(
+      "user_id, match_id, match:matches(home_team, away_team, home_score, away_score, kickoff_at)",
+    )
+    .eq("points_awarded", 3);
+
+  if (error) throw new Error(`listExactScoreBetsWithMatch: ${error.message}`);
+
+  type MatchRow = {
+    home_team: string;
+    away_team: string;
+    home_score: number | null;
+    away_score: number | null;
+    kickoff_at: string;
+  };
+
+  return (data ?? []).flatMap((row) => {
+    const m = row.match as MatchRow | MatchRow[] | null;
+    const match = Array.isArray(m) ? (m[0] ?? null) : m;
+    // match non null (FK) ; score réel non null car points_awarded=3 implique un
+    // match fini et scoré (garde pour satisfaire le typage nullable du schéma).
+    if (match === null || match.home_score === null || match.away_score === null) {
+      return [];
+    }
+    return [
+      {
+        user_id: row.user_id,
+        match_id: row.match_id,
+        kickoff_at: match.kickoff_at,
+        home_team: match.home_team,
+        away_team: match.away_team,
+        home_score: match.home_score,
+        away_score: match.away_score,
       },
     ];
   });

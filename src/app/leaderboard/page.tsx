@@ -5,7 +5,11 @@ import {
   type CoalitionViews,
   type PlayerViews,
 } from "@/components/leaderboard-tabs";
-import { listAllBets, listScoredBetsWithKickoff } from "@/lib/bets";
+import {
+  listAllBets,
+  listScoredBetsWithKickoff,
+  listExactScoreBetsWithMatch,
+} from "@/lib/bets";
 import {
   assignRanks,
   buildCampStandings,
@@ -18,6 +22,8 @@ import { listPlayers } from "@/lib/users";
 import { requireSession } from "@/lib/auth/require-session";
 import { currentWeekWindow } from "@/lib/week";
 import { WeeklyWinnerCard } from "@/components/weekly-winner-card";
+import { buildLoufoqueBet } from "@/lib/loufoque";
+import { LoufoqueBetCard } from "@/components/loufoque-bet-card";
 
 // Les points évoluent après chaque match : le rendu ne doit pas être figé.
 export const dynamic = "force-dynamic";
@@ -30,14 +36,16 @@ export default async function LeaderboardPage() {
   await requireSession();
   const now = new Date();
   const week = currentWeekWindow(now);
-  const [players, bets, weeklyBets] = await Promise.all([
+  const [players, bets, weeklyBets, exactBets] = await Promise.all([
     listPlayers(),
     listAllBets(),
     listScoredBetsWithKickoff(),
+    listExactScoreBetsWithMatch(),
   ]);
   const entries = buildLeaderboard(players, bets);
   const weekly = buildWeeklyLeaderboard(weeklyBets, players, week);
   const winner = weekly[0] ?? null;
+  const loufoque = buildLoufoqueBet(exactBets, players, week);
 
   const cursusEntries = entries.filter((e) => inGroup(e, "cursus"));
   const piscineEntries = entries.filter((e) => inGroup(e, "piscine"));
@@ -63,6 +71,7 @@ export default async function LeaderboardPage() {
       ) : (
         <>
           <WeeklyWinnerCard winner={winner} />
+          <LoufoqueBetCard loufoque={loufoque} />
           <LeaderboardTabs
             coalitions={coalitions}
             camps={camps}
