@@ -4,6 +4,7 @@
 // bets a une RLS default-deny, donc tout passe par le serveur après auth().
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/paginate";
 import type { LeaderboardBet, WeeklyBet } from "@/lib/leaderboard";
 import type { LoufoqueBet } from "@/lib/loufoque";
 import type { ProfileBetRow } from "@/lib/profile";
@@ -48,14 +49,20 @@ export async function upsertBet(input: {
  * Tous les pronos (id joueur + points attribués) pour le classement. Lecture
  * server-only via service_role (bets est RLS default-deny). On ne renvoie que
  * user_id + points_awarded — jamais les scores pronostiqués individuels.
+ * Paginé : sans cela PostgREST plafonne à 1000 lignes, faussant le comptage et
+ * le taux de réussite dès que le total de paris dépasse 1000.
  */
 export async function listAllBets(): Promise<LeaderboardBet[]> {
-  const { data, error } = await supabaseAdmin
-    .from("bets")
-    .select("user_id, points_awarded");
-
-  if (error) throw new Error(`listAllBets: ${error.message}`);
-  return data ?? [];
+  return fetchAllRows((from, to) =>
+    supabaseAdmin
+      .from("bets")
+      .select("user_id, points_awarded")
+      .range(from, to)
+      .then(({ data, error }) => {
+        if (error) throw new Error(`listAllBets: ${error.message}`);
+        return data ?? [];
+      }),
+  );
 }
 
 /**
@@ -97,16 +104,23 @@ export async function listBetsWithMatchByUser(
  * match, pour le classement "meilleur de la semaine". Lecture server-only via
  * service_role (bets = RLS default-deny). Normalise le match imbriqué en
  * objet|null (supabase-js peut le typer objet OU tableau selon la relation).
+ * Paginé sur les lignes BRUTES (la normalisation flatMap se fait après, sinon
+ * une page filtrée incomplète arrêterait la pagination trop tôt).
  */
 export async function listScoredBetsWithKickoff(): Promise<WeeklyBet[]> {
-  const { data, error } = await supabaseAdmin
-    .from("bets")
-    .select("user_id, points_awarded, match:matches(kickoff_at)")
-    .not("points_awarded", "is", null);
+  const rows = await fetchAllRows((from, to) =>
+    supabaseAdmin
+      .from("bets")
+      .select("user_id, points_awarded, match:matches(kickoff_at)")
+      .not("points_awarded", "is", null)
+      .range(from, to)
+      .then(({ data, error }) => {
+        if (error) throw new Error(`listScoredBetsWithKickoff: ${error.message}`);
+        return data ?? [];
+      }),
+  );
 
-  if (error) throw new Error(`listScoredBetsWithKickoff: ${error.message}`);
-
-  return (data ?? []).flatMap((row) => {
+  return rows.flatMap((row) => {
     const m = row.match as { kickoff_at: string } | { kickoff_at: string }[] | null;
     const match = Array.isArray(m) ? (m[0] ?? null) : m;
     // points_awarded est non null (filtré ci-dessus) ; match non null (FK not null).
@@ -126,17 +140,9 @@ export async function listScoredBetsWithKickoff(): Promise<WeeklyBet[]> {
  * (équipes, score réel, kickoff), pour le "pari le plus loufoque de la semaine".
  * Lecture server-only via service_role (bets = RLS default-deny). Normalise le
  * match imbriqué en objet|null (supabase-js peut le typer objet OU tableau).
+ * Paginé sur les lignes BRUTES (normalisation flatMap après la pagination).
  */
 export async function listExactScoreBetsWithMatch(): Promise<LoufoqueBet[]> {
-  const { data, error } = await supabaseAdmin
-    .from("bets")
-    .select(
-      "user_id, match_id, match:matches(home_team, away_team, home_score, away_score, kickoff_at)",
-    )
-    .eq("points_awarded", 3);
-
-  if (error) throw new Error(`listExactScoreBetsWithMatch: ${error.message}`);
-
   type MatchRow = {
     home_team: string;
     away_team: string;
@@ -144,8 +150,27 @@ export async function listExactScoreBetsWithMatch(): Promise<LoufoqueBet[]> {
     away_score: number | null;
     kickoff_at: string;
   };
+  type ExactRow = {
+    user_id: string;
+    match_id: string;
+    match: MatchRow | MatchRow[] | null;
+  };
 
-  return (data ?? []).flatMap((row) => {
+  const rows = await fetchAllRows<ExactRow>((from, to) =>
+    supabaseAdmin
+      .from("bets")
+      .select(
+        "user_id, match_id, match:matches(home_team, away_team, home_score, away_score, kickoff_at)",
+      )
+      .eq("points_awarded", 3)
+      .range(from, to)
+      .then(({ data, error }) => {
+        if (error) throw new Error(`listExactScoreBetsWithMatch: ${error.message}`);
+        return (data ?? []) as ExactRow[];
+      }),
+  );
+
+  return rows.flatMap((row) => {
     const m = row.match as MatchRow | MatchRow[] | null;
     const match = Array.isArray(m) ? (m[0] ?? null) : m;
     // match non null (FK) ; score réel non null car points_awarded=3 implique un
