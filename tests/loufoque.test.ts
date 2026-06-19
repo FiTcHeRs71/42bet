@@ -48,6 +48,11 @@ describe("buildLoufoqueBet", () => {
     expect(buildLoufoqueBet(bets, [player("u1", "alice")], WIN)).toBeNull();
   });
 
+  test("pari pile à la borne end (exclusive) ignoré → null", () => {
+    const bets = [bet("u1", "m1", 4, 3, WIN.end.toISOString())];
+    expect(buildLoufoqueBet(bets, [player("u1", "alice")], WIN)).toBeNull();
+  });
+
   test("rareté : 1 scoreur bat 2 scoreurs", () => {
     const players = [player("u1", "alice"), player("u2", "bob"), player("u3", "carol")];
     const bets = [
