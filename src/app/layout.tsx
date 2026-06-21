@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 import { AppBackground } from "@/components/app-background";
 import { BottomNav } from "@/components/bottom-nav";
 import { auth, signIn } from "@/lib/auth/config";
@@ -38,6 +39,7 @@ export default async function RootLayout({
         <AppBackground />
         <SiteHeader />
         {children}
+        <SiteFooter />
         <BottomNav
           login={login}
           signInAction={async () => {
