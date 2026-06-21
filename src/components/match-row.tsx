@@ -22,17 +22,22 @@ export function MatchRow({
   state,
   bet,
   isAuthenticated,
+  anchorId,
 }: {
   match: Match;
   state: MatchDisplayState;
   bet?: Bet;
   isAuthenticated: boolean;
+  anchorId?: string;
 }) {
   const isFinished = state === "finished";
   const hasScore = match.home_score !== null && match.away_score !== null;
 
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 text-sm sm:flex-nowrap sm:gap-4">
+    <li
+      id={anchorId}
+      className="flex scroll-mt-24 flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 text-sm sm:flex-nowrap sm:gap-4"
+    >
       <span className="w-12 shrink-0 tabular-nums text-zinc-400">
         {TIME_FMT.format(new Date(match.kickoff_at))}
       </span>

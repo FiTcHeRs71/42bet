@@ -1,5 +1,6 @@
 // src/app/matches/page.tsx
 import { MatchRow } from "@/components/match-row";
+import { ScrollToNextMatch } from "@/components/scroll-to-next-match";
 import { requireSession } from "@/lib/auth/require-session";
 import { listMyBets } from "@/lib/bets";
 import { listMatches } from "@/lib/matches";
@@ -36,8 +37,17 @@ export default async function MatchesPage() {
   const now = new Date();
   const days = groupByDay(matches);
 
+  // Premier match non encore joué (à venir / en cours) : cible de l'auto-scroll
+  // pour atterrir directement sur la zone « pariable » plutôt qu'en haut de la
+  // liste des matchs terminés.
+  const NEXT_ANCHOR = "next-match";
+  const nextMatchId = days
+    .flatMap((day) => day.matches)
+    .find((match) => displayState(match, now) !== "finished")?.id;
+
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 p-6">
+      {nextMatchId && <ScrollToNextMatch targetId={NEXT_ANCHOR} />}
       <h1 className="mb-6 text-2xl font-bold tracking-tight">Matchs</h1>
 
       {days.length === 0 ? (
@@ -57,6 +67,7 @@ export default async function MatchesPage() {
                     state={displayState(match, now)}
                     bet={betsByMatch.get(match.id)}
                     isAuthenticated={isAuthenticated}
+                    anchorId={match.id === nextMatchId ? NEXT_ANCHOR : undefined}
                   />
                 ))}
               </ul>
