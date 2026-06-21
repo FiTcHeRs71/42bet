@@ -15,6 +15,17 @@ export function SiteHeader() {
           <NavLink href="/leaderboard">Classement</NavLink>
         </nav>
       </div>
+      <span className="hidden text-xs text-zinc-500 sm:block">
+        made by{" "}
+        <a
+          href="https://github.com/FiTcHeRs71"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-zinc-300 transition-colors hover:text-cyan"
+        >
+          fducrot
+        </a>
+      </span>
       <AuthButton />
     </header>
   );
