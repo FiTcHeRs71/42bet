@@ -46,6 +46,17 @@ export default async function Home() {
         <p className="mt-3">
           Salut <strong>{login}</strong> 👋
         </p>
+        <p className="mt-4 text-xs text-zinc-500">
+          made by{" "}
+          <a
+            href="https://github.com/FiTcHeRs71"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-zinc-300 transition-colors hover:text-cyan"
+          >
+            fducrot
+          </a>
+        </p>
       </section>
 
       <div className="grid gap-6 sm:grid-cols-2">
