@@ -129,6 +129,7 @@ export type Database = {
           home_team: string
           id: string
           kickoff_at: string
+          score_locked: boolean
           stage: string | null
           status: Database["public"]["Enums"]["match_status"]
           updated_at: string
@@ -144,6 +145,7 @@ export type Database = {
           home_team: string
           id?: string
           kickoff_at: string
+          score_locked?: boolean
           stage?: string | null
           status?: Database["public"]["Enums"]["match_status"]
           updated_at?: string
@@ -159,6 +161,7 @@ export type Database = {
           home_team?: string
           id?: string
           kickoff_at?: string
+          score_locked?: boolean
           stage?: string | null
           status?: Database["public"]["Enums"]["match_status"]
           updated_at?: string
@@ -216,6 +219,7 @@ export type Database = {
           p_away: number
           p_fd_id: number
           p_home: number
+          p_lock?: boolean
           p_scored: Json
         }
         Returns: Json

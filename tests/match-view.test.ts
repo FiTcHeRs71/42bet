@@ -18,6 +18,7 @@ function match(over: Partial<Match>): Match {
     status: "scheduled",
     home_score: null,
     away_score: null,
+    score_locked: false,
     created_at: "2026-06-01T00:00:00Z",
     updated_at: "2026-06-01T00:00:00Z",
     ...over,

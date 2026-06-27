@@ -19,7 +19,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "simulate-score": "node --env-file=.env.local --import tsx scripts/simulate-score.ts",
-    "reset-play-data": "node --env-file=.env.local --import tsx scripts/reset-play-data.ts"
+    "reset-play-data": "node --env-file=.env.local --import tsx scripts/reset-play-data.ts",
+    "fix-match-score": "node --env-file=.env.local --import tsx scripts/fix-match-score.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",
