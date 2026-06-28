@@ -36,7 +36,7 @@ joueur, par **camp** (étudiants du cursus vs piscineux) et par **coalition 42**
 
 - **Connexion via l'API 42** (OAuth2) — pas de mot de passe à gérer, tu joues avec ton login intra, ta photo et ta coalition.
 - **Paris vainqueur + score** avec **verrou automatique au coup d'envoi** (impossible de parier une fois le match commencé).
-- **Scoring automatique** après chaque match, idempotent et centralisé.
+- **Scoring automatique** après chaque match, idempotent et centralisé — avec un **verrou de score** pour corriger à la main un résultat erroné renvoyé par l'API sans qu'il soit réécrasé.
 - **Classement segmenté** : général, par camp (Students / Piscineux), par coalition.
 - **Page profil** `/profile/:login` — rangs (général/camp/coalition), stats, taux de réussite et historique.
 - **Badge coalition 42** aux vraies couleurs, vue des matchs groupée par journée.
