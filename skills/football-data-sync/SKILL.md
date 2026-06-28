@@ -95,6 +95,7 @@ export async function GET(req: Request) {
 - ❌ Endpoint cron sans vérif de `CRON_SECRET` (n'importe qui pourrait le déclencher)
 - ❌ Calcul des points hors de [[bet-points-calc]] (réimplémente la règle)
 - ❌ Cron qui prend > 10s (timeout Vercel sur free tier)
+- ❌ Réécraser un match `teams_locked` (affiche KO corrigée à la main) avec les équipes nulles de l'API
 
 ## Liens
 

@@ -132,6 +132,7 @@ export type Database = {
           score_locked: boolean
           stage: string | null
           status: Database["public"]["Enums"]["match_status"]
+          teams_locked: boolean
           updated_at: string
         }
         Insert: {
@@ -148,6 +149,7 @@ export type Database = {
           score_locked?: boolean
           stage?: string | null
           status?: Database["public"]["Enums"]["match_status"]
+          teams_locked?: boolean
           updated_at?: string
         }
         Update: {
@@ -164,6 +166,7 @@ export type Database = {
           score_locked?: boolean
           stage?: string | null
           status?: Database["public"]["Enums"]["match_status"]
+          teams_locked?: boolean
           updated_at?: string
         }
         Relationships: []

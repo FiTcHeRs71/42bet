@@ -62,6 +62,17 @@ tant que le match n'est pas fini. `score_locked` (bool, défaut `false`, migrati
 réécrit plus le score/status (cf. § « Verrou de score »). Lecture publique.
 Index : `kickoff_at`, `status`.
 
+**Verrous manuels contre l'API.** Deux colonnes booléennes protègent une
+correction manuelle d'une réécriture par le cron :
+- `score_locked` (migration 0011) — fige `home_score`/`away_score`/`status`
+  (score erroné renvoyé par l'API).
+- `teams_locked` (migration 0012) — fige `home_team`/`away_team`/crests/`stage`.
+  football-data.org renvoie des équipes nulles pour les matchs KO tant que le
+  tirage n'est pas propagé (on affiche alors « À déterminer ») ; une affiche
+  renseignée à la main via `npm run fix-match-teams` et verrouillée n'est plus
+  réécrasée par `upsert_matches`. `kickoff_at` reste mis à jour (l'heure d'un KO
+  peut se préciser).
+
 ### `bets`
 Un pari = un user × un match (`UNIQUE (user_id, match_id)`). FK vers `users` et
 `matches` en `ON DELETE CASCADE`. `points_awarded` NULL tant que pas scoré
