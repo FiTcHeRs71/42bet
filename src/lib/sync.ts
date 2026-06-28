@@ -10,7 +10,12 @@ import { calcBetPoints } from "@/lib/points";
 export type FootballDataMatch = {
   id: number;
   status: string;
-  score?: { fullTime?: { home: number | null; away: number | null } };
+  score?: {
+    fullTime?: { home: number | null; away: number | null };
+    // En phase à élimination, un nul à 90' est tranché aux tirs au but :
+    // `winner` désigne alors le qualifié (HOME_TEAM / AWAY_TEAM), sinon DRAW.
+    winner?: "HOME_TEAM" | "AWAY_TEAM" | "DRAW" | null;
+  };
 };
 export type FootballDataResponse = { matches: FootballDataMatch[] };
 
@@ -19,6 +24,8 @@ export type FinishedMatch = {
   footballDataId: number;
   homeScore: number;
   awayScore: number;
+  // Renseigné uniquement sur un nul à 90' décidé aux tirs au but (phase finale).
+  qualifiedWinner?: "home" | "away";
 };
 
 export function parseFinishedMatches(res: FootballDataResponse): FinishedMatch[] {
@@ -30,9 +37,22 @@ export function parseFinishedMatches(res: FootballDataResponse): FinishedMatch[]
     const home = m.score?.fullTime?.home;
     const away = m.score?.fullTime?.away;
     if (typeof home !== "number" || typeof away !== "number") continue;
-    out.push({ footballDataId: m.id, homeScore: home, awayScore: away });
+    // Le qualifié n'a de sens que sur un nul à 90' (tirs au but). Une victoire
+    // nette est déjà couverte par le score lui-même.
+    const qualifiedWinner =
+      home === away ? winnerSide(m.score?.winner) : undefined;
+    out.push({ footballDataId: m.id, homeScore: home, awayScore: away, qualifiedWinner });
   }
   return out;
+}
+
+/** Mappe le `winner` football-data vers notre côté qualifié (ou `undefined`). */
+function winnerSide(
+  winner: "HOME_TEAM" | "AWAY_TEAM" | "DRAW" | null | undefined,
+): "home" | "away" | undefined {
+  if (winner === "HOME_TEAM") return "home";
+  if (winner === "AWAY_TEAM") return "away";
+  return undefined;
 }
 
 /** A bet row as selected from the DB (generated types are snake_case). */
@@ -48,7 +68,7 @@ export type ScoredBet = { betId: string; points: 0 | 1 | 3 };
 
 export function scoreBets(
   bets: BetRow[],
-  result: { homeScore: number; awayScore: number },
+  result: { homeScore: number; awayScore: number; qualifiedWinner?: "home" | "away" },
 ): ScoredBet[] {
   return bets.map((b) => ({
     betId: b.id,
@@ -126,6 +146,7 @@ export async function runSync(deps: SyncDeps): Promise<SyncSummary> {
       const scored = scoreBets(match.bets, {
         homeScore: fm.homeScore,
         awayScore: fm.awayScore,
+        qualifiedWinner: fm.qualifiedWinner,
       });
 
       const alreadyDone =

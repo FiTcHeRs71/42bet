@@ -59,7 +59,12 @@ Auth via l'API 42 pour que tout le monde joue avec son vrai identité intra.
 | Prédiction | Points |
 |---|---|
 | Bon vainqueur (ou nul) | +1 pt |
+| Nul à 90' tranché aux tirs au but → pari sur le qualifié | +1 pt |
 | Score exact | +3 pts |
+
+> Phase à élimination : un nul à 90' va aux tirs au but. Le parieur « nul »
+> garde son point **et** celui qui a misé la victoire du qualifié en gagne un
+> aussi. Détail dans la skill `bet-points-calc`.
 
 ---
 

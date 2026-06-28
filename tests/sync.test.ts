@@ -42,6 +42,27 @@ describe("parseFinishedMatches", () => {
   test("returns empty array when there are no matches", () => {
     expect(parseFinishedMatches({ matches: [] })).toEqual([]);
   });
+
+  test("marks the qualifier on a knockout draw decided on penalties", () => {
+    const res: FootballDataResponse = {
+      matches: [
+        // Nul à 90' mais HOME se qualifie aux tirs au but.
+        { id: 10, status: "FINISHED", score: { fullTime: { home: 1, away: 1 }, winner: "HOME_TEAM" } },
+        // Nul à 90' mais AWAY se qualifie aux tirs au but.
+        { id: 11, status: "FINISHED", score: { fullTime: { home: 2, away: 2 }, winner: "AWAY_TEAM" } },
+        // Nul de poule (résultat définitif) : aucun qualifié.
+        { id: 12, status: "FINISHED", score: { fullTime: { home: 0, away: 0 }, winner: "DRAW" } },
+        // Victoire nette : `winner` n'est pas un qualifié de TAB.
+        { id: 13, status: "FINISHED", score: { fullTime: { home: 3, away: 1 }, winner: "HOME_TEAM" } },
+      ],
+    };
+    expect(parseFinishedMatches(res)).toEqual([
+      { footballDataId: 10, homeScore: 1, awayScore: 1, qualifiedWinner: "home" },
+      { footballDataId: 11, homeScore: 2, awayScore: 2, qualifiedWinner: "away" },
+      { footballDataId: 12, homeScore: 0, awayScore: 0, qualifiedWinner: undefined },
+      { footballDataId: 13, homeScore: 3, awayScore: 1, qualifiedWinner: undefined },
+    ]);
+  });
 });
 
 describe("scoreBets", () => {
@@ -61,6 +82,21 @@ describe("scoreBets", () => {
 
   test("returns empty array when there are no bets", () => {
     expect(scoreBets([], { homeScore: 1, awayScore: 1 })).toEqual([]);
+  });
+
+  test("passes qualifiedWinner through: knockout draw rewards the qualifier bettor", () => {
+    const knockoutBets: BetRow[] = [
+      { id: "b1", user_id: "u1", home_score: 2, away_score: 1 }, // pari victoire HOME (qualifié) -> 1
+      { id: "b2", user_id: "u2", home_score: 1, away_score: 1 }, // pari nul exact -> 3
+      { id: "b3", user_id: "u3", home_score: 0, away_score: 2 }, // pari victoire AWAY (éliminé) -> 0
+    ];
+    expect(
+      scoreBets(knockoutBets, { homeScore: 1, awayScore: 1, qualifiedWinner: "home" }),
+    ).toEqual([
+      { betId: "b1", points: 1 },
+      { betId: "b2", points: 3 },
+      { betId: "b3", points: 0 },
+    ]);
   });
 });
 

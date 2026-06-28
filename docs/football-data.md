@@ -77,14 +77,18 @@ Attribue les points des paris des matchs terminés.
    `AWARDED` avec un score `fullTime` numérique :
 
    ```ts
-   { id, status, score: { fullTime: { home, away } } }
+   { id, status, score: { fullTime: { home, away }, winner } }
    //              ▼ parseFinishedMatches (filtre FINISHED|AWARDED)
-   { footballDataId, homeScore, awayScore }
+   { footballDataId, homeScore, awayScore, qualifiedWinner? }
    ```
+
+   `fullTime` = score à 90'+prolongation. Sur un **nul** à ce stade (tirs au but),
+   `score.winner` (`HOME_TEAM`/`AWAY_TEAM`) désigne le **qualifié**, mappé en
+   `qualifiedWinner` (`"home"`/`"away"`). En poule, `winner = DRAW` → pas de qualifié.
 
 4. Pour chaque match : charge les paris **non scorés** (`points_awarded IS NULL`),
    calcule via `scoreBets`/`calcBetPoints` (**+3** exact, **+1** bon vainqueur/nul,
-   **0** sinon).
+   **+1** pari sur le qualifié d'un nul aux tirs au but, **0** sinon).
 5. **Idempotence** : match déjà `finished` au même score + aucun pari à scorer → no-op.
 6. RPC **`score_match`** (migration `0006`, étendue par `0011`) : écrit le
    résultat + les points de façon **atomique** et incrémente `users.total_points`.

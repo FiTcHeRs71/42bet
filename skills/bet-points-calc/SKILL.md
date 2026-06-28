@@ -15,16 +15,35 @@ description: Calcul des points d'un pari 42Bet — règles métier strictes (+1 
 |---|---|
 | Mauvais vainqueur prédit | **0** |
 | Bon vainqueur (ou nul correctement prédit) | **+1** |
+| Nul à 90' décidé aux tirs au but, pari sur le qualifié | **+1** |
 | Score exact prédit | **+3** *(pas +1 +3 — c'est +3 total)* |
 
 Les points sont **cumulés au total du user**, pas calculés à la volée pour le classement (perf).
+
+### Tirs au but (phase à élimination)
+
+football-data ne met dans `score.fullTime` que le **score à 90'+prolongation**.
+Un match nul à ce moment-là est tranché aux tirs au but : `score.winner`
+(`HOME_TEAM` / `AWAY_TEAM`) désigne alors le **qualifié**. Règle 42Bet :
+
+- le parieur **« nul »** garde son point (à 90' c'était bien un nul) ;
+- le parieur **« victoire du qualifié »** gagne **aussi** 1 point ;
+- le parieur **« victoire de l'éliminé »** reste à 0.
+
+Le qualifié est porté jusqu'au calcul via `qualifiedWinner` (`"home" | "away"`,
+renseigné **uniquement** sur un nul à 90'). En poule, un nul reste un nul
+(`winner = DRAW` → pas de qualifié).
 
 ## Structure attendue
 
 Code dans `src/lib/points.ts` :
 
 ```ts
-type MatchResult = { homeScore: number; awayScore: number };
+type MatchResult = {
+  homeScore: number;
+  awayScore: number;
+  qualifiedWinner?: "home" | "away" | null; // nul à 90' tranché aux tirs au but
+};
 type Bet = { homeScore: number; awayScore: number };
 
 /**
@@ -39,7 +58,10 @@ export function calcBetPoints(bet: Bet, result: MatchResult): 0 | 1 | 3 {
   // 2. Bon vainqueur (ou nul) ?
   const betWinner = winner(bet.homeScore, bet.awayScore);
   const resultWinner = winner(result.homeScore, result.awayScore);
-  return betWinner === resultWinner ? 1 : 0;
+  if (betWinner === resultWinner) return 1;
+  // 3. Nul à 90' aux tirs au but : on récompense aussi le bon qualifié.
+  if (resultWinner === "draw" && result.qualifiedWinner === betWinner) return 1;
+  return 0;
 }
 
 function winner(home: number, away: number): "home" | "away" | "draw" {
@@ -61,6 +83,9 @@ Fichier `tests/points.test.ts`. Cas à couvrir :
 - [ ] Mauvais vainqueur (2-1 / 0-1) → 0
 - [ ] Nul prédit alors qu'il y a un vainqueur (1-1 / 2-1) → 0
 - [ ] Vainqueur prédit alors que match nul (2-1 / 1-1) → 0
+- [ ] Nul TAB, pari sur le qualifié domicile (2-1 / 1-1, home qualifié) → 1
+- [ ] Nul TAB, pari sur l'éliminé (2-1 / 1-1, away qualifié) → 0
+- [ ] Nul TAB, parieur « nul » garde son point (1-1 / 2-2, home qualifié) → 1
 
 ## Anti-patterns à refuser
 
