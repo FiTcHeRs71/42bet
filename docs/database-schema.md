@@ -57,8 +57,10 @@ Profil joueur + `total_points` dénormalisé (perf classement). Keyé par l'intr
 Source football-data.org. `football_data_id` UNIQUE = clé d'idempotence du sync.
 `kickoff_at` = **source unique du verrou des paris** (pas de `locked_at`).
 `status` = enum `match_status`. `home_score`/`away_score` = score fin 90', NULL
-tant que le match n'est pas fini. Lecture publique. Index : `kickoff_at`,
-`status`.
+tant que le match n'est pas fini. `score_locked` (bool, défaut `false`, migration
+`0011`) = **verrou de score manuel** : quand `true`, le cron `sync-results` ne
+réécrit plus le score/status (cf. § « Verrou de score »). Lecture publique.
+Index : `kickoff_at`, `status`.
 
 **Verrous manuels contre l'API.** Deux colonnes booléennes protègent une
 correction manuelle d'une réécriture par le cron :
@@ -88,6 +90,28 @@ tout insert/update de pari après le coup d'envoi. Aucune colonne ne stocke cet
 `bets.points_awarded` est rempli par le cron via `calcBetPoints()`, dans la même
 transaction qui passe le match en `finished` et incrémente `users.total_points`.
 Le cron **skip un match déjà `finished`** → points jamais doublés.
+
+## Verrou de score (`score_locked`, migration `0011`)
+
+football-data.org renvoie parfois un **score erroné** (ex. Espagne-Arabie 5-0 au
+lieu de 4-0, Égypte-Iran 1-2 au lieu de 1-1). Une fois le score corrigé à la
+main, le cron `sync-results` le réécrasait avec la valeur fausse de l'API au
+passage suivant (`score_match` mettait à jour le score de façon inconditionnelle).
+
+La colonne `matches.score_locked` clôt le problème :
+
+- `score_match(..., p_lock => true)` **pose le verrou** et écrit le score corrigé.
+- Tant que `score_locked = true`, `score_match` **préserve** `home_score`,
+  `away_score` et `status` (ne les écrase plus) ; les points continuent d'être
+  attribués aux paris non scorés (idempotence inchangée).
+- `p_lock` a un **défaut `false`** → le cron et `simulate-score` (appels à 4 args)
+  restent inchangés. La signature 4-args de `0006` est `DROP`-ée par `0011` pour
+  éviter l'ambiguïté de surcharge.
+
+Correction opérationnelle d'un score déjà scoré : `npm run fix-match-score --
+<footballDataId> <home> <away> [--yes]` (`scripts/fix-match-score.ts`) — backup
+JSON → annule l'ancien scoring (`points_awarded = NULL` + décrément des totaux) →
+re-score via le vrai RPC `score_match` **en posant le verrou**.
 
 ## Validation
 

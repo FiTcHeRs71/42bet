@@ -17,7 +17,7 @@ description: Pattern pour le cron Vercel qui synchronise les matchs depuis footb
 4. **Gate temporel (économie d'appels)** : avant tout appel réseau, vérifier en DB qu'au moins un match est dans sa **fenêtre de résultat** (`status != 'finished' AND kickoff <= now() AND kickoff >= now() - 4h`). Si aucun → return `200 {skipped:true}` **sans appeler l'API**. La marge de 4h couvre prolongations + tirs au but en phase finale. On ne sait jamais qu'un match est fini sans demander : on requête donc seulement quand un match *peut* être en train de finir, pas à vide.
 5. **Transaction** : la mise à jour du match + calcul des points sur ses paris doit être atomique. Sinon : risque d'avoir le score à jour sans les points calculés.
 6. **Cron unique** : tier gratuit Vercel = 2 crons max. Tout passe par `/api/cron/sync-results`, déclenché toutes les **5 minutes**.
-7. **Verrou d'équipes** : football-data.org renvoie des équipes nulles pour les matchs KO non tirés (on écrit « À déterminer »). Une affiche renseignée à la main via `npm run fix-match-teams` pose `teams_locked` (migration `0012`) → `upsert_matches` ne réécrit alors plus équipes/crests/`stage`. Même principe que le verrou de score `score_locked`, appliqué aux équipes. Ne jamais réécraser un match `teams_locked`.
+7. **Verrou de score** : football-data.org renvoie parfois un score faux. Un match `score_locked = true` (corrigé à la main) ne doit **jamais** être réécrit par le cron — `score_match` préserve alors `home_score`/`away_score`/`status`. Corriger un score erroné déjà scoré via `npm run fix-match-score -- <fdId> <home> <away> --yes` (pose le verrou). Voir migration `0011` + `docs/database-schema.md` § « Verrou de score ».
 
 ## Flow
 
@@ -51,9 +51,8 @@ adaptateur mince qui câble les vraies I/O.
 | Route (adaptateur) | `src/app/api/cron/sync-results/route.ts` | Auth → build `SyncDeps` → `runSync` → JSON |
 | Orchestrateur (pur, DI) | `src/lib/sync.ts` | `runSync`, `parseFinishedMatches`, `scoreBets`, `ThrottledError` |
 | Fetch foot (server-only) | `src/lib/football-data.ts` | 1 `GET` global WC, 429 → `ThrottledError` |
-| Persistance atomique | `supabase/migrations/0006_score_match.sql` | RPC `score_match` — 1 transaction, garde d'idempotence SQL (`points_awarded IS NULL`) |
-| Ingestion fixtures | `supabase/migrations/0009_upsert_matches.sql` (+ garde `teams_locked` en `0012`) | RPC `upsert_matches` — upsert idempotent, ne réécrit pas une affiche verrouillée |
-| Correction manuelle d'affiche | `scripts/fix-match-teams.ts` (`npm run fix-match-teams`) | renseigne équipes + pose `teams_locked` |
+| Persistance atomique | `supabase/migrations/0006_score_match.sql` (+ `0011_score_lock.sql`) | RPC `score_match` — 1 transaction, garde d'idempotence SQL (`points_awarded IS NULL`) + verrou `score_locked` (param `p_lock`) |
+| Correction manuelle | `scripts/fix-match-score.ts` (`npm run fix-match-score`) | Backup → reset → re-score via `score_match(p_lock => true)` quand l'API a renvoyé un score faux |
 | Calcul des points | `src/lib/points.ts` (`calcBetPoints`) | règle pure, jamais réimplémentée |
 
 ```ts
@@ -89,6 +88,7 @@ export async function GET(req: Request) {
 
 - ❌ Recalculer les points pour un match déjà finalisé (double attribution)
 - ❌ UPDATE match sans vérifier que le résultat a vraiment changé
+- ❌ Réécrire le score d'un match `score_locked = true` (corrigé à la main) avec la valeur de l'API
 - ❌ Boucle qui appelle football-data.org par match (1 seul appel global)
 - ❌ Appeler l'API alors qu'aucun match n'est dans sa fenêtre de résultat (gaspille la réserve de rate limit — voir gate temporel, règle 4)
 - ❌ Ignorer les headers de throttling `x-requests-available-minute` / `x-requestcounter-reset`

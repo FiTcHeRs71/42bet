@@ -86,8 +86,10 @@ Attribue les points des paris des matchs terminés.
    calcule via `scoreBets`/`calcBetPoints` (**+3** exact, **+1** bon vainqueur/nul,
    **0** sinon).
 5. **Idempotence** : match déjà `finished` au même score + aucun pari à scorer → no-op.
-6. RPC **`score_match`** (migration `0006`) : écrit le résultat + les points de
-   façon **atomique** et incrémente `users.total_points`.
+6. RPC **`score_match`** (migration `0006`, étendue par `0011`) : écrit le
+   résultat + les points de façon **atomique** et incrémente `users.total_points`.
+   **Sauf si le match est verrouillé** (`score_locked`, cf. §6) : le score n'est
+   alors plus réécrit.
 7. Réponse : `{ ok, skipped, throttled, processed, scored, errors }`.
 
 ## 3. Statuts football-data (rappel)
@@ -119,7 +121,32 @@ points d'un match donné (`scripts/simulate-score.ts`).
 > WebSocket natif. Supprimable en Node 22+. (`ws`/`@types/ws`/`tsx` sont en
 > devDependencies uniquement.)
 
-## 5. Variables d'env & ressources
+## 6. Scores erronés de l'API & verrou de score
+
+football-data.org a renvoyé plusieurs **scores faux** pendant la CM (Espagne-Arabie
+5-0 au lieu de 4-0 ; Égypte-Iran 1-2 au lieu de 1-1). Comme `score_match`
+réécrivait le score à chaque tick, une correction manuelle était **réécrasée** au
+passage suivant du cron (les points restaient bons — paris déjà `points_awarded`,
+idempotence — mais le **score affiché** repassait au mauvais).
+
+**Solution durable** : la colonne `matches.score_locked` (migration `0011`).
+`score_match(..., p_lock => true)` pose le verrou ; tant qu'il est posé, le score
+n'est plus écrasé. Défaut `false` → cron et `simulate-score` inchangés.
+
+**Corriger un score déjà scoré** (recalcule les paris + pose le verrou) :
+
+```bash
+npm run fix-match-score -- <footballDataId> <home> <away>        # dry-run
+npm run fix-match-score -- <footballDataId> <home> <away> --yes  # exécution
+```
+
+`scripts/fix-match-score.ts` : backup JSON → annule l'ancien scoring
+(`points_awarded = NULL` + décrément des totaux) → re-score via le vrai RPC
+`score_match` avec `p_lock => true`. Idempotent (re-lancer avec le bon score ne
+change pas les points). Détail schéma : [`database-schema.md`](./database-schema.md)
+§ « Verrou de score ».
+
+## 7. Variables d'env & ressources
 
 - `FOOTBALL_DATA_API_KEY` (server-only) — cf. [`.env.local.example`](../.env.local.example).
 - `CRON_SECRET` — protège les deux routes cron.
