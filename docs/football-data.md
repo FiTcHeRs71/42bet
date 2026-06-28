@@ -47,11 +47,23 @@ Remplit / met à jour la table `matches`.
      (`SCHEDULED/TIMED → scheduled`, `IN_PLAY/PAUSED → live`,
      **`FINISHED` et `AWARDED` → `finished`**).
    - `formatStage` : libellé de phase lisible.
-4. RPC Postgres **`upsert_matches`** (migration `0009`) — **upsert idempotent** :
+4. RPC Postgres **`upsert_matches`** (migration `0009`, garde `teams_locked` en
+   `0012`) — **upsert idempotent** :
    - `football_data_id` est la clé de dédup ;
    - `finished` est **collant** (un match terminé n'est jamais rétrogradé) ;
-   - un **score déjà enregistré n'est jamais écrasé**.
+   - un **score déjà enregistré n'est jamais écrasé** ;
+   - si **`teams_locked = true`**, équipes/crests/`stage` ne sont **pas réécrits**
+     (cf. encadré ci-dessous).
 5. Réponse : `{ ok: true, upserted: N }` (ou `{ ok: true, throttled: true }`).
+
+> **Affiches KO « À déterminer » & verrou d'équipes.** football-data.org renvoie
+> `homeTeam`/`awayTeam` à `null` pour les matchs à élimination directe tant que
+> le tirage n'est pas propagé (même quand les poules sont finies). On écrit alors
+> « À déterminer ». Pour débloquer une affiche connue avant l'API :
+> `npm run fix-match-teams -- <fdId> "Équipe A" "Équipe B" --yes` — renseigne les
+> équipes **et** pose `teams_locked` (migration `0012`) pour que le cron ne
+> réécrase plus l'affiche. Même principe que le verrou de score `score_locked`,
+> appliqué cette fois aux équipes.
 
 ### b) Scoring — `GET /api/cron/sync-results` (`*/5 * * * *`, GitHub Actions)
 

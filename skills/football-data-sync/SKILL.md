@@ -17,6 +17,7 @@ description: Pattern pour le cron Vercel qui synchronise les matchs depuis footb
 4. **Gate temporel (économie d'appels)** : avant tout appel réseau, vérifier en DB qu'au moins un match est dans sa **fenêtre de résultat** (`status != 'finished' AND kickoff <= now() AND kickoff >= now() - 4h`). Si aucun → return `200 {skipped:true}` **sans appeler l'API**. La marge de 4h couvre prolongations + tirs au but en phase finale. On ne sait jamais qu'un match est fini sans demander : on requête donc seulement quand un match *peut* être en train de finir, pas à vide.
 5. **Transaction** : la mise à jour du match + calcul des points sur ses paris doit être atomique. Sinon : risque d'avoir le score à jour sans les points calculés.
 6. **Cron unique** : tier gratuit Vercel = 2 crons max. Tout passe par `/api/cron/sync-results`, déclenché toutes les **5 minutes**.
+7. **Verrou d'équipes** : football-data.org renvoie des équipes nulles pour les matchs KO non tirés (on écrit « À déterminer »). Une affiche renseignée à la main via `npm run fix-match-teams` pose `teams_locked` (migration `0012`) → `upsert_matches` ne réécrit alors plus équipes/crests/`stage`. Même principe que le verrou de score `score_locked`, appliqué aux équipes. Ne jamais réécraser un match `teams_locked`.
 
 ## Flow
 
@@ -51,6 +52,8 @@ adaptateur mince qui câble les vraies I/O.
 | Orchestrateur (pur, DI) | `src/lib/sync.ts` | `runSync`, `parseFinishedMatches`, `scoreBets`, `ThrottledError` |
 | Fetch foot (server-only) | `src/lib/football-data.ts` | 1 `GET` global WC, 429 → `ThrottledError` |
 | Persistance atomique | `supabase/migrations/0006_score_match.sql` | RPC `score_match` — 1 transaction, garde d'idempotence SQL (`points_awarded IS NULL`) |
+| Ingestion fixtures | `supabase/migrations/0009_upsert_matches.sql` (+ garde `teams_locked` en `0012`) | RPC `upsert_matches` — upsert idempotent, ne réécrit pas une affiche verrouillée |
+| Correction manuelle d'affiche | `scripts/fix-match-teams.ts` (`npm run fix-match-teams`) | renseigne équipes + pose `teams_locked` |
 | Calcul des points | `src/lib/points.ts` (`calcBetPoints`) | règle pure, jamais réimplémentée |
 
 ```ts
@@ -92,6 +95,7 @@ export async function GET(req: Request) {
 - ❌ Endpoint cron sans vérif de `CRON_SECRET` (n'importe qui pourrait le déclencher)
 - ❌ Calcul des points hors de [[bet-points-calc]] (réimplémente la règle)
 - ❌ Cron qui prend > 10s (timeout Vercel sur free tier)
+- ❌ Réécraser un match `teams_locked` (affiche KO corrigée à la main) avec les équipes nulles de l'API
 
 ## Liens
 
