@@ -35,6 +35,7 @@ describe("formatStage", () => {
     expect(formatStage("GROUP_STAGE", "GROUP_A")).toBe("Groupe A");
   });
   it("formate les phases finales", () => {
+    expect(formatStage("LAST_32", null)).toBe("16es de finale");
     expect(formatStage("LAST_16", null)).toBe("8es de finale");
     expect(formatStage("QUARTER_FINALS", null)).toBe("Quarts de finale");
     expect(formatStage("SEMI_FINALS", null)).toBe("Demi-finales");

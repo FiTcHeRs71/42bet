@@ -65,6 +65,8 @@ export function formatStage(
     return `Groupe ${group.replace(/^GROUP_/, "")}`;
   }
   switch (stage) {
+    case "LAST_32":
+      return "16es de finale";
     case "LAST_16":
       return "8es de finale";
     case "QUARTER_FINALS":
