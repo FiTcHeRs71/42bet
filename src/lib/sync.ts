@@ -11,7 +11,12 @@ export type FootballDataMatch = {
   id: number;
   status: string;
   score?: {
+    // ⚠️ Sur un match tranché aux tirs au but, football-data met les pénos DANS
+    // `fullTime` : fullTime = regularTime + extraTime + penalties. Le score du
+    // match (pour le pronostic) est donc `fullTime − penalties`.
+    duration?: "REGULAR" | "EXTRA_TIME" | "PENALTY_SHOOTOUT" | string;
     fullTime?: { home: number | null; away: number | null };
+    penalties?: { home: number | null; away: number | null };
     // En phase à élimination, un nul à 90' est tranché aux tirs au but :
     // `winner` désigne alors le qualifié (HOME_TEAM / AWAY_TEAM), sinon DRAW.
     winner?: "HOME_TEAM" | "AWAY_TEAM" | "DRAW" | null;
@@ -34,11 +39,15 @@ export function parseFinishedMatches(res: FootballDataResponse): FinishedMatch[]
     // AWARDED = résultat validé sur tapis (forfait, etc.) : score définitif,
     // à scorer comme un match terminé (cohérent avec mapStatus côté ingestion).
     if (m.status !== "FINISHED" && m.status !== "AWARDED") continue;
-    const home = m.score?.fullTime?.home;
-    const away = m.score?.fullTime?.away;
-    if (typeof home !== "number" || typeof away !== "number") continue;
-    // Le qualifié n'a de sens que sur un nul à 90' (tirs au but). Une victoire
-    // nette est déjà couverte par le score lui-même.
+    const fullHome = m.score?.fullTime?.home;
+    const fullAway = m.score?.fullTime?.away;
+    if (typeof fullHome !== "number" || typeof fullAway !== "number") continue;
+    // Retire les tirs au but : `fullTime` les inclut, mais on score sur le
+    // résultat à la fin du jeu (un nul, le cas échéant).
+    const home = fullHome - (m.score?.penalties?.home ?? 0);
+    const away = fullAway - (m.score?.penalties?.away ?? 0);
+    // Le qualifié n'a de sens que sur un nul à la fin du jeu (tirs au but). Une
+    // victoire nette est déjà couverte par le score lui-même.
     const qualifiedWinner =
       home === away ? winnerSide(m.score?.winner) : undefined;
     out.push({ footballDataId: m.id, homeScore: home, awayScore: away, qualifiedWinner });

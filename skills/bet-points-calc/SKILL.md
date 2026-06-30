@@ -22,9 +22,12 @@ Les points sont **cumulés au total du user**, pas calculés à la volée pour l
 
 ### Tirs au but (phase à élimination)
 
-football-data ne met dans `score.fullTime` que le **score à 90'+prolongation**.
-Un match nul à ce moment-là est tranché aux tirs au but : `score.winner`
-(`HOME_TEAM` / `AWAY_TEAM`) désigne alors le **qualifié**. Règle 42Bet :
+⚠️ football-data **inclut les tirs au but dans `score.fullTime`**
+(`fullTime = regularTime + extraTime + penalties`). Le score du match retenu
+pour le pronostic est donc **`fullTime − penalties`** (extraction faite dans
+`parseFinishedMatches`), soit le résultat à la fin du jeu — un **nul** quand le
+match part aux pénos. `score.winner` (`HOME_TEAM` / `AWAY_TEAM`) désigne alors le
+**qualifié**. Règle 42Bet :
 
 - le parieur **« nul »** garde son point (à 90' c'était bien un nul) ;
 - le parieur **« victoire du qualifié »** gagne **aussi** 1 point ;
