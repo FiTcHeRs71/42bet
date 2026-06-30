@@ -4,7 +4,10 @@
 // score_match avec le bon score (re-score + re-bump propre, logique testée).
 //
 // Dry-run par défaut. Passer `-- --yes` pour exécuter.
-// Usage : node --env-file=.env.local --import tsx scripts/fix-match-score.ts <fdId> <home> <away> [--yes]
+// Usage : node --env-file=.env.local --import tsx scripts/fix-match-score.ts <fdId> <home> <away> [--qualifier=home|away] [--yes]
+//
+// `--qualifier` : sur un nul tranché aux tirs au but (phase finale), désigne le
+// qualifié pour récompenser (+1) les parieurs ayant misé sur sa victoire.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import ws from "ws";
@@ -23,8 +26,14 @@ async function main() {
   const home = Number(hArg);
   const away = Number(aArg);
   const execute = process.argv.includes("--yes");
+  const qArg = process.argv.find((a) => a.startsWith("--qualifier="))?.split("=")[1];
+  if (qArg && qArg !== "home" && qArg !== "away") {
+    console.error("--qualifier doit valoir 'home' ou 'away'");
+    process.exit(1);
+  }
+  const qualifiedWinner = qArg as "home" | "away" | undefined;
   if (![fdId, home, away].every(Number.isInteger)) {
-    console.error("Usage: ... fix-match-score.ts <fdId> <home> <away> [--yes]");
+    console.error("Usage: ... fix-match-score.ts <fdId> <home> <away> [--qualifier=home|away] [--yes]");
     process.exit(1);
   }
 
@@ -47,7 +56,7 @@ async function main() {
     const p = b.points_awarded ?? 0;
     if (p) oldByUser[b.user_id] = (oldByUser[b.user_id] ?? 0) + p;
   }
-  const newScored = scoreBets((bets ?? []) as BetRow[], { homeScore: home, awayScore: away });
+  const newScored = scoreBets((bets ?? []) as BetRow[], { homeScore: home, awayScore: away, qualifiedWinner });
 
   console.log(`MATCH ${m.home_team}-${m.away_team} : ${m.home_score}-${m.away_score} → ${home}-${away}`);
   console.log(`Paris : ${bets?.length ?? 0} | ancien total ${Object.values(oldByUser).reduce((a, b) => a + b, 0)} → nouveau ${newScored.reduce((a, s) => a + s.points, 0)}`);

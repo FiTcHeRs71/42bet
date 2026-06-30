@@ -77,14 +77,19 @@ Attribue les points des paris des matchs terminés.
    `AWARDED` avec un score `fullTime` numérique :
 
    ```ts
-   { id, status, score: { fullTime: { home, away }, winner } }
+   { id, status, score: { fullTime: { home, away }, penalties?, winner } }
    //              ▼ parseFinishedMatches (filtre FINISHED|AWARDED)
    { footballDataId, homeScore, awayScore, qualifiedWinner? }
    ```
 
-   `fullTime` = score à 90'+prolongation. Sur un **nul** à ce stade (tirs au but),
-   `score.winner` (`HOME_TEAM`/`AWAY_TEAM`) désigne le **qualifié**, mappé en
-   `qualifiedWinner` (`"home"`/`"away"`). En poule, `winner = DRAW` → pas de qualifié.
+   ⚠️ **`fullTime` inclut les tirs au but.** Sur un match tranché aux pénos,
+   football-data renvoie `fullTime = regularTime + extraTime + penalties` (ex.
+   `fullTime 4-5`, `penalties 3-4` pour un 1-1 qualifié à l'extérieur). Le score
+   du match (celui sur lequel portent les pronos) est donc
+   **`fullTime − penalties`** = le résultat à la fin du jeu (un **nul** le cas
+   échéant). Sur ce nul, `score.winner` (`HOME_TEAM`/`AWAY_TEAM`) désigne le
+   **qualifié**, mappé en `qualifiedWinner` (`"home"`/`"away"`). En poule,
+   `penalties` est absent et `winner = DRAW` → pas de qualifié.
 
 4. Pour chaque match : charge les paris **non scorés** (`points_awarded IS NULL`),
    calcule via `scoreBets`/`calcBetPoints` (**+3** exact, **+1** bon vainqueur/nul,

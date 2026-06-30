@@ -43,6 +43,30 @@ describe("parseFinishedMatches", () => {
     expect(parseFinishedMatches({ matches: [] })).toEqual([]);
   });
 
+  test("excludes the penalty shootout from the score (fullTime includes penalties)", () => {
+    // football-data.org met les tirs au but DANS fullTime :
+    // fullTime = regularTime + extraTime + penalties. Le score du match (pour
+    // le pronostic) est le score à la fin du jeu = fullTime − penalties, soit
+    // un nul ; `winner` désigne le qualifié.
+    const res: FootballDataResponse = {
+      matches: [
+        {
+          id: 20,
+          status: "FINISHED",
+          score: {
+            winner: "AWAY_TEAM",
+            duration: "PENALTY_SHOOTOUT",
+            fullTime: { home: 4, away: 5 },
+            penalties: { home: 3, away: 4 },
+          },
+        },
+      ],
+    };
+    expect(parseFinishedMatches(res)).toEqual([
+      { footballDataId: 20, homeScore: 1, awayScore: 1, qualifiedWinner: "away" },
+    ]);
+  });
+
   test("marks the qualifier on a knockout draw decided on penalties", () => {
     const res: FootballDataResponse = {
       matches: [
